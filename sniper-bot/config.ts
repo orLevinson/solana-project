@@ -88,6 +88,13 @@ export const PRICE_API_FAIL_LIMIT = 3;      // failures before on-chain fallback
 //   repeat dev wallets passing the rugHistory filter.
 export const HOLDER_CONCENTRATION_LIMIT = 0.15;  // 15% max single holder
 export const RUG_HISTORY_WINDOW_MINS    = 30;    // minutes — rug detection window
+export const RUG_WALLET_TX_FETCH_COUNT = 50; // amount of TX to check for rug history
+export const NEW_WALLET_TX_COUNT = 10; // amount of TX to check for new wallet detection
+export const RUG_SCORE_THRESHOLD = 500; // rug score threshold
+export const BUNDLE_SLOT0_LIMIT = 2; // amount of TX to check for bundle slot 0
+export const BUNDLE_SLOT12_LIMIT = 3; // amount of TX to check for bundle slot 1 and 2
+export const SIGNATURE_FETCH_LIMIT = 15; // amount of TX to check for bundle detection
+export const CONCURRENCY_LIMIT = 5; // amount of TX to check for bundle detection
 
 // ─────────────────────────────────────────────────────────────
 // IN-MEMORY CACHES
