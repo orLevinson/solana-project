@@ -2,330 +2,232 @@
 trigger: always_on
 ---
 
-PUMP.FUN SNIPER BOT — FULL CONTEXT RULES
+# PUMP.FUN SNIPER BOT — RULES
 
-=== WHAT THIS BOT DOES ===
-Monitors Solana blockchain in real time for newly created tokens on pump.fun.
-When a new token is detected, it runs filters to assess quality, buys if filters
-pass, monitors the position, and sells automatically based on profit/loss rules.
-The edge is speed (buying in first 1-3 blocks) + filters (avoiding rugs).
-This is NOT an arbitrage or MEV bot. It is a momentum sniper.
+## WHAT THIS BOT DOES
+Monitors Solana in real time for new pump.fun token launches. Detects via WebSocket, runs filters, buys if all pass, monitors position, sells automatically on TP/SL/time/emergency. Edge = speed (first 1–3 blocks) + filters (avoiding rugs). NOT arbitrage or MEV.
 
-=== WHY PUMP.FUN ===
-Pump.fun is a Solana token launchpad where anyone can create a token in seconds.
-Tokens launch on a bonding curve — price increases as people buy. Early buyers
-get the best price. Most tokens fail, but occasional ones pump 5x–50x in minutes.
-The strategy is to catch those early, take profit fast, and cut losers faster.
+## STRATEGY CONTEXT
+Pump.fun tokens launch on a bonding curve — price rises as people buy. Early buyers get best price. Most tokens fail, but some pump 5x–50x in minutes. Goal: catch early, take profit fast, cut losers faster. One 5x winner covers ~10 stop-loss losses at 0.1 SOL size.
 
-=== CAPITAL CONTEXT ===
-Total capital: 2 SOL
-- 0.5 SOL is permanently reserved as gas buffer. Never use this for trades.
-  Reason: Jito tips + transaction fees add up. Running out of SOL for gas =
-  stuck in a position you can't exit.
-- 1.5 SOL is the trading bankroll
-- Each trade uses 0.1–0.3 SOL. Start at 0.1 SOL per trade until bot is proven.
-- Max 5 concurrent open positions at any time.
-  Reason: More than 5 and you lose track, and one bad run wipes too much capital.
-- One 5x winner = covers ~10 stop-loss losses at 0.1 SOL size.
-  Math: win 0.4 SOL on 5x, lose 0.04 SOL on each SL hit.
+---
 
-=== DRY RUN MODE ===
-DRY_RUN=true in .env activates paper-trading mode. The entire pipeline runs
-(listen → filter → buy → monitor → sell) but no transactions are ever submitted.
-All PnL is simulated and logged identically to live mode.
-- ALWAYS run in DRY_RUN mode first when deploying any code change.
-- NEVER disable DRY_RUN until steps 1–6 of the build order are confirmed stable.
-- DRY_RUN must be checked as the first line in buyEngine.ts and sellEngine.ts,
-  before any transaction is constructed.
+## CAPITAL RULES (2 SOL TOTAL)
+- `0.5 SOL` — permanent gas reserve. NEVER trade with this. Running out of gas = stuck in positions.
+- `1.5 SOL` — trading bankroll
+- `0.1–0.3 SOL` per trade. Start at 0.1 SOL until bot is proven.
+- Max `5` concurrent open positions at any time.
 
-=== TECH STACK ===
-Language: TypeScript (not Python — Solana ecosystem is TS-first, all major SDKs
-  have first-class TS support. Python's solana-py is underpowered and slow.)
-Runtime: Node.js v18+
-Key packages:
-- @solana/web3.js — core Solana interactions, tx building, account fetching
-- @solana/spl-token — SPL token account reads, mint info
-- @jito-ts/sdk — Jito block engine integration for fast tx landing
-- pump-fun-sdk — pump.fun program interaction (buy/sell on bonding curve)
-  WARNING: pump-fun-sdk is community-maintained and may lag behind pump.fun
-  contract upgrades. If SDK calls start failing, fall back to building raw
-  transactions directly against the program IDL. Keep the IDL in /src/idl/.
-- bs58 — base58 encoding/decoding for keypairs
-- dotenv — environment variable management (.env file)
-- chalk — colored terminal output for logging
-- axios — HTTP requests to pump.fun API for price data
-- tsx — run TypeScript directly without compiling (dev/testing speed only)
-  NOTE: For production 24/7 operation, compile to JS and run with plain node.
-  tsx adds overhead and is less stable for long-running processes.
+---
 
-=== INFRASTRUCTURE ===
-Helius (helius.dev):
-  - Provides the RPC endpoint for reading chain state
-  - Provides WebSocket endpoint for real-time log subscriptions
-  - Free tier gives 1M credits/month — enough to start, but getSignaturesForAddress
-    and WebSocket subscriptions are credit-heavy. Cache aggressively.
-  - Upgrade to $49/mo Growth plan once the bot is proven. Do not wait until
-    you get throttled mid-session — plan the upgrade proactively.
-  - Required env var: HELIUS_RPC_URL, HELIUS_WS_URL
+## DRY RUN MODE
+`DRY_RUN=true` in `.env` activates paper-trading. Full pipeline runs but NO transactions are submitted. PnL is simulated and logged identically to live mode with `[DRY]` prefix.
+- ALWAYS run DRY_RUN first after any code change.
+- NEVER disable DRY_RUN until build steps 1–7 are confirmed stable.
+- DRY_RUN check MUST be the first line in `buyEngine.ts` and `sellEngine.ts`.
 
-Jito (jito.wtf):
-  - Block engine that lets you submit transaction bundles
-  - Bundles land faster than regular mempool txs because validators prioritize them
-  - You pay a "tip" of 0.001–0.005 SOL per bundle to a Jito tip account
-  - During high-volume periods (viral launches), tip wars can spike to 0.01–0.02
-    SOL per bundle. Implement dynamic tip scaling based on recent tip history.
-  - Bundle landing is NOT guaranteed. Implement retry logic: if a bundle is not
-    confirmed within 2 block slots (~800ms), resubmit with a higher tip.
-  - NEVER send buys or sells as regular transactions — too slow, you'll miss entries
-  - Required env var: JITO_BLOCK_ENGINE_URL
+---
 
-Pump.fun API:
-  - REST API for fetching token price, market cap, bonding curve progress
-  - Used by positionManager.ts to poll current price of open positions
-  - Endpoint: https://frontend-api.pump.fun/coins/{mintAddress}
-  - WARNING: This is an unofficial, undocumented API. No SLA. It can go down.
-  - ALWAYS implement an on-chain fallback: read the bonding curve account directly
-    via getAccountInfo() and parse the reserve fields to calculate price.
-    Fallback activates automatically if the REST API returns non-200 for >3 polls.
+## TECH STACK
+- **Language:** TypeScript (NOT Python — Solana ecosystem is TS-first, all SDKs have first-class TS support. `solana-py` is slow and underpowered.)
+- **Runtime:** Node.js v18+
+- **For dev:** `tsx` (run TS directly). **For production 24/7:** compile to JS, run with `node`. tsx adds overhead and is unstable for long-running processes.
 
-=== EXECUTION FLOW (detailed) ===
-1. LISTEN: WebSocket connects to Helius. Subscribes to logs from pump.fun program
-   address (6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P). Every new token
-   creation emits an initializeMint2 log. Parse this to extract: mint address,
-   dev wallet address, token name, symbol, metadata URI.
+### Key Packages
+| Package | Purpose |
+|---|---|
+| `@solana/web3.js` | Core Solana interactions, tx building, account fetching |
+| `@solana/spl-token` | SPL token account reads, mint info |
+| `@jito-ts/sdk` | Jito block engine for fast tx landing |
+| `pump-fun-sdk` | Buy/sell on pump.fun bonding curve. WARNING: community-maintained, may lag contract upgrades. If SDK calls fail, fall back to raw IDL in `/src/idl/pump_fun.json`. |
+| `bs58` | Base58 keypair encoding |
+| `dotenv` | `.env` management |
+| `chalk` | Colored terminal output |
+| `axios` | HTTP to pump.fun REST API |
+| `tsx` | Dev runner |
 
-2. FILTER: Run all 5 checks in parallel. If ANY fail, discard immediately.
-   Log every rejection with the specific reason — this data is critical for tuning.
+---
 
-   SPEED NOTE: Filters add latency. rugHistory (RPC call, ~200–500ms) and
-   metadata (Arweave/IPFS HTTP fetch, ~1–3s) are the slowest. By the time all
-   filters complete, the token may already be 2–5x. This is the deliberate safety
-   tradeoff: we sacrifice some entries to avoid rugs. Accept it and do not remove
-   filters to chase speed.
+## INFRASTRUCTURE
 
-   - rugHistory: fetch dev wallet's transaction history. If they previously
-     created tokens that went to zero quickly or removed liquidity = skip.
-     Maintain a local in-memory cache of known bad wallets to skip re-fetching
-     on repeat offenders.
-   - bundleDetect: fetch the first 5 transactions on the new token. Group by block
-     slot. If 3+ unique wallets bought in slot 0 = coordinated bundle = skip.
-     CAVEAT: sophisticated bundlers spread buys across 2–3 slots to evade this.
-     Consider checking slots 0–2 and lowering threshold to 2+ wallets if you
-     observe many bundled rugs passing this filter in production logs.
-   - mintAuthority: fetch mint account via getMint(). mintAuthority MUST be null.
-     freezeAuthority should also be null. If either is set, skip.
-   - holderConcentration: fetch the top 10 token holders via getProgramAccounts().
-     If any single wallet (excluding the bonding curve program) holds >15% of
-     supply = skip. Reason: large concentrated holders dump and crash price even
-     when mint authority is revoked. This closes the gap that mintAuthority alone
-     misses.
-   - metadata: fetch Metaplex metadata account for the token. Retrieve the URI,
-     fetch the JSON from Arweave/IPFS. Check for twitter and telegram fields.
-     No socials = low effort = higher rug probability = skip.
+### Helius (helius.dev)
+- RPC endpoint + WebSocket for real-time log subscriptions
+- Free tier: 1M credits/mo. `getSignaturesForAddress` and WebSocket are credit-heavy — cache aggressively.
+- Upgrade to Growth (~$49/mo) proactively before getting throttled mid-session.
+- Env vars: `HELIUS_RPC_URL`, `HELIUS_WS_URL`
 
-3. BUY: Build swap transaction using pump.fun SDK to buy on bonding curve.
-   Check DRY_RUN flag first — if true, simulate and log, do not submit.
-   Wrap in Jito bundle with tip. Set slippage to 15% (new pools are volatile).
-   Set compute unit limit and price via ComputeBudgetProgram.
-   Record entry: mint address, entry price, SOL spent, timestamp.
+### Jito (jito.wtf)
+- Block engine for fast tx bundles. Validators prioritize bundles over regular txs.
+- Tip: `0.001–0.005 SOL` per bundle normally. During viral launches tip wars spike to `0.01–0.02 SOL`.
+- Implement dynamic tip scaling based on recent tip success rate.
+- Bundle landing NOT guaranteed. Retry logic: if not confirmed within 2 slots (~800ms), resubmit with tip +50%, up to `JITO_TIP_MAX`.
+- NEVER send buys/sells as regular transactions. Too slow.
+- Env var: `JITO_BLOCK_ENGINE_URL`
 
-4. MONITOR: positionManager polls price every 3 seconds via pump.fun REST API.
-   If REST API fails 3 consecutive polls, switch to on-chain bonding curve read.
-   Calculates current multiplier vs entry price. Checks all exit conditions.
-   Maintains a Map of open positions keyed by mint address.
-   IMPORTANT: partialSold flag must be tracked per position. After a 70% TP sell,
-   the remaining 30% is still in the map. All subsequent exit checks (time stop,
-   stop loss, emergency) must operate on the remaining token balance only and
-   must correctly reflect that a partial sell has already occurred in PnL logs.
+### Pump.fun API
+- REST for token price + bonding curve progress: `https://frontend-api.pump.fun/coins/{mintAddress}`
+- WARNING: unofficial, undocumented, no SLA. Can go down.
+- ALWAYS implement on-chain fallback: read bonding curve account via `getAccountInfo()`, parse `virtualSolReserves` / `virtualTokenReserves` to compute spot price. Auto-activates after 3 consecutive REST failures.
 
-5. SELL: Exit triggers checked on every poll:
-   - Take Profit: price >= 2x entry → sell 70% of position immediately via Jito,
-     set partialSold=true, move stop-loss on remaining 30% to 1.5x entry.
-   - Stop Loss: price <= 0.6x entry (−40%) → sell 100% of REMAINING balance
-     immediately, no hesitation. If partialSold=true, only remaining 30% is sold.
-   - Time Stop: position open > 10 minutes AND price < 1.2x entry → sell 100%
-     of REMAINING balance. Applies regardless of partialSold state.
-     Reason: flat tokens rarely pump, capital is better deployed elsewhere.
-   - Emergency: detect liquidity removal or large dev wallet sell → sell 100%
-     of REMAINING balance immediately regardless of price.
-   Check DRY_RUN flag first in sellEngine — if true, simulate and log only.
+---
 
-=== FILE STRUCTURE + WHAT EACH FILE DOES ===
-config.ts
-  — Single source of truth for all tunable parameters. Import this everywhere.
-  — Contains: BUY_SIZE, MAX_POSITIONS, TAKE_PROFIT, STOP_LOSS, TIME_STOP,
-    JITO_TIP, JITO_TIP_MAX, SLIPPAGE, PRICE_POLL_INTERVAL, PUMP_FUN_PROGRAM_ID,
-    HOLDER_CONCENTRATION_LIMIT (default 0.15 = 15%)
+## EXECUTION FLOW
 
-.env
-  — Secret keys and URLs. Never commit this to git.
-  — Contains: HELIUS_RPC_URL, HELIUS_WS_URL, JITO_BLOCK_ENGINE_URL,
-    WALLET_PRIVATE_KEY (base58 encoded), DRY_RUN (true/false)
+### 1. LISTEN
+WebSocket → Helius → subscribe to pump.fun program logs (`6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P`). Parse `initializeMint2` to extract: mint address, dev wallet, name, symbol, metadata URI.
 
-src/utils/rpc.ts
-  — Creates and exports the Connection object (Helius RPC)
-  — Creates and exports the WebSocket connection
-  — Single instance used everywhere, no duplicate connections
+### 2. FILTER (all 5 must pass — run in parallel)
+If ANY fail → discard immediately + log rejection reason.
 
-src/utils/wallet.ts
-  — Loads keypair from WALLET_PRIVATE_KEY env var
-  — Helper to check current SOL balance
-  — Ensures gas reserve is respected before any trade
+> **Speed note:** Filters add latency. `rugHistory` (~200–500ms) and `metadata` (~1–3s Arweave/IPFS) are slowest. By the time filters complete, token may already be 2–5x. This is the deliberate safety tradeoff — do NOT remove filters to chase speed.
 
-src/utils/jito.ts
-  — Jito bundle builder utility
-  — Takes a transaction, wraps it in a bundle, adds tip instruction, submits
-  — Implements retry logic: if bundle not confirmed within 2 slots, resubmit
-    with tip increased by 50%, up to JITO_TIP_MAX. Log every retry attempt.
-  — Dynamic tip scaling: track last 10 submitted tip amounts and their landing
-    success rate. Raise base tip during high-activity windows automatically.
+| Filter | Logic | Skip if |
+|---|---|---|
+| `rugHistory` | Check dev wallet tx history. Cache bad wallets in-memory. | Dev previously created tokens that died within 30min |
+| `bundleDetect` | Fetch first 5 txs, group by slot. Check slots 0–2. | 3+ wallets in slot 0, OR 2+ wallets in slots 1–2 (spread bundling) |
+| `mintAuthority` | `getMint()` from `@solana/spl-token` | `mintAuthority` ≠ null OR `freezeAuthority` ≠ null |
+| `holderConcentration` | `getProgramAccounts()` top 10 holders. Exclude bonding curve program. | Any single wallet > `HOLDER_CONCENTRATION_LIMIT` (15%) of supply |
+| `metadata` | Fetch Metaplex URI → JSON from Arweave/IPFS | No `twitter` or `telegram` fields in JSON |
 
-src/listener/tokenListener.ts
-  — Subscribes to pump.fun program logs via Helius WebSocket
-  — Parses initializeMint2 events to extract new token data
-  — Emits events to the filter engine, does nothing else
-  — This is the entry point of the entire pipeline
+### 3. BUY
+1. Check `DRY_RUN` — if true, simulate + log, return.
+2. Check `MAX_POSITIONS` not exceeded.
+3. Check gas reserve intact.
+4. Build via `pump-fun-sdk` (fallback to raw IDL if SDK fails).
+5. Wrap in Jito bundle with tip.
+6. Set `slippage: 15%`, `ComputeBudgetProgram` priority fee.
+7. Record: mint, entry price, SOL spent, timestamp.
 
-src/filters/rugHistory.ts
-  — Fetches dev wallet's past transactions using getSignaturesForAddress
-  — Looks for pattern: wallet created token → token died within 30min = rug flag
-  — Maintains a local in-memory cache (Map) of known bad wallets to avoid
-    re-fetching. Cache persists for the lifetime of the process.
+### 4. MONITOR
+Poll price every 3s via `priceOracle.ts`. After 3 consecutive REST failures → switch to on-chain bonding curve read automatically. Calculate multiplier vs entry. Check exit conditions every poll. Track `partialSold` and `remainingTokens` per position.
 
-src/filters/bundleDetect.ts
-  — Fetches first 5 transactions on the new token
-  — Groups by block slot. If 3+ unique wallets bought in slot 0 = bundle detected
-  — Also checks slots 1–2 for spread bundling patterns (2+ wallets = flag)
-  — Returns boolean: isBundled
+### 5. SELL
+Check `DRY_RUN` first. All exit conditions operate on `remainingTokens` (accounts for partial sells).
 
-src/filters/mintAuthority.ts
-  — Fetches mint account using getMint() from @solana/spl-token
-  — Checks mintAuthority field. Must be null.
-  — Checks freezeAuthority. Must be null.
+| Trigger | Condition | Action |
+|---|---|---|
+| Take Profit | price ≥ 2x entry | Sell 70% via Jito. Set `partialSold=true`. Move SL on remaining 30% to 1.5x entry. |
+| Stop Loss | price ≤ 0.6x entry (−40%) | Sell 100% of remaining. No hesitation. |
+| Time Stop | open > 10min AND price < 1.2x | Sell 100% of remaining. Flat tokens rarely recover. |
+| Emergency | Liquidity removal OR large dev wallet sell detected | Sell 100% of remaining immediately, ignore price. |
 
-src/filters/holderConcentration.ts
-  — Fetches top 10 SPL token accounts via getProgramAccounts() with filters
-  — Calculates each holder's % of total supply
-  — Skips the bonding curve program account from the check
-  — Returns: { concentrated: boolean, topHolderPct: number }
-  — Fails filter if any single holder > HOLDER_CONCENTRATION_LIMIT
+---
 
-src/filters/metadata.ts
-  — Fetches Metaplex metadata account for the token
-  — Retrieves URI, fetches the JSON from Arweave/IPFS
-  — Checks for twitter and telegram fields in the JSON
-  — Returns: { hasSocials: boolean, name, symbol, image }
+## FILE STRUCTURE
 
-src/trading/buyEngine.ts
-  — Checks DRY_RUN first. If true: log simulated buy, register mock position, return.
-  — Takes a validated token (passed all filters)
-  — Checks positionManager to ensure MAX_POSITIONS not exceeded
-  — Checks wallet.ts to ensure gas reserve intact
-  — Builds buy transaction via pump-fun-sdk (fall back to raw IDL if SDK fails)
-  — Submits via jito.ts
-  — On success: registers position in positionManager
+```
+sniper-bot/
+├── config.ts                        # All tunable params — import everywhere
+├── .env                             # Secrets — NEVER commit to git
+└── src/
+    ├── index.ts                     # Entry point, wires all modules, graceful shutdown
+    ├── listener/
+    │   └── tokenListener.ts         # WebSocket → parse initializeMint2 → emit events only
+    ├── filters/
+    │   ├── rugHistory.ts            # Dev wallet history + in-memory bad wallet cache
+    │   ├── bundleDetect.ts          # Coordinated buy detection across slots 0–2
+    │   ├── mintAuthority.ts         # getMint() — mintAuthority + freezeAuthority must be null
+    │   ├── holderConcentration.ts   # getProgramAccounts() top holders, skip bonding curve acct
+    │   └── metadata.ts             # Metaplex URI → Arweave/IPFS JSON → check socials
+    ├── trading/
+    │   ├── buyEngine.ts             # DRY_RUN check first, filters check, build+submit buy
+    │   ├── sellEngine.ts            # DRY_RUN check first, build+submit sell, log PnL
+    │   ├── positionManager.ts       # Map<mint, Position>, polling loops, exit condition checks
+    │   └── priceOracle.ts           # Abstraction: REST primary → on-chain fallback, getPrice(mint)
+    ├── utils/
+    │   ├── rpc.ts                   # Single Connection + WebSocket instance, reused everywhere
+    │   ├── wallet.ts                # Load keypair from env, SOL balance check, gas reserve guard
+    │   └── jito.ts                  # Bundle builder, tip instruction, retry+escalate logic
+    └── logger/
+        ├── logger.ts                # JSON-lines trades.log, [DRY] prefix in dry run
+        └── dashboard.ts             # Chalk terminal: positions, PnL, win rate, SOL balance
+```
 
-src/trading/positionManager.ts
-  — Maintains Map<mintAddress, Position> of all open trades
-  — Position shape: { mint, entryPrice, currentPrice, solSpent,
-    tokenAmount, openedAt, partialSold, remainingTokens, apiFailCount }
-  — startMonitoring(mint): begins polling loop for a position
-  — stopMonitoring(mint): clears interval, removes from map
-  — On each poll: try REST API price; if apiFailCount >= 3 switch to on-chain
-    bonding curve account read. Update currentPrice, calculate multiplier,
-    call checkExitConditions(). Pass partialSold state to exit checks.
+---
 
-src/trading/sellEngine.ts
-  — Checks DRY_RUN first. If true: log simulated sell with PnL, return.
-  — Takes mint address + sell reason (TP / SL / TIME / EMERGENCY) + token amount
-  — Builds sell transaction via pump-fun-sdk (fall back to raw IDL if SDK fails)
-  — Submits via jito.ts
-  — Logs result: SOL received, profit/loss, hold time, sell reason
+## CONFIG PARAMS (`config.ts`)
 
-src/trading/priceOracle.ts
-  — Abstraction layer for price fetching used by positionManager
-  — Primary: pump.fun REST API
-  — Fallback: read bonding curve account on-chain, parse virtualSolReserves
-    and virtualTokenReserves to compute spot price
-  — Exposes a single getPrice(mint): Promise<number> interface
-  — Handles the primary/fallback switching transparently
+```ts
+BUY_SIZE = 0.1              // SOL per trade (start here, increase when proven)
+MAX_POSITIONS = 5
+TAKE_PROFIT = 2.0           // x multiplier
+STOP_LOSS = 0.6             // x multiplier (−40%)
+TIME_STOP_MINUTES = 10
+JITO_TIP = 0.002            // SOL base tip
+JITO_TIP_MAX = 0.02         // SOL max tip (tip wars ceiling)
+SLIPPAGE = 0.15             // 15%
+PRICE_POLL_INTERVAL = 3000  // ms
+HOLDER_CONCENTRATION_LIMIT = 0.15  // 15% max single holder
+PUMP_FUN_PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+GAS_RESERVE = 0.5           // SOL — never trade below this balance
+```
 
-src/logger/logger.ts
-  — Logs every event to trades.log file (JSON lines format)
-  — Events: TOKEN_DETECTED, FILTER_PASS, FILTER_FAIL (with reason),
-    BUY_SENT, BUY_CONFIRMED, SELL_SENT, SELL_CONFIRMED, BUNDLE_RETRY
-  — In DRY_RUN mode, events are prefixed with [DRY] for easy filtering
-  — This data is critical for tuning filters in production
+---
 
-src/logger/dashboard.ts
-  — Terminal display using chalk
-  — Shows: current open positions, total PnL today, win rate, SOL balance,
-    DRY_RUN indicator if active
-  — Refreshes every 5 seconds
+## ENV VARS (`.env`)
 
-src/index.ts
-  — Wires everything together
-  — Initializes RPC, wallet, positionManager
-  — Starts tokenListener
-  — Handles graceful shutdown on CTRL+C (close WebSocket, log final state)
+```
+HELIUS_RPC_URL=
+HELIUS_WS_URL=
+JITO_BLOCK_ENGINE_URL=
+WALLET_PRIVATE_KEY=         # base58 encoded — NEVER log this
+DRY_RUN=true                # start true, flip to false only when ready
+```
 
-=== BUILD ORDER ===
-Build and test each module before moving to the next. Never skip ahead.
-1.  config.ts — define all constants first (include DRY_RUN, HOLDER_CONCENTRATION_LIMIT)
-2.  .env + src/utils/rpc.ts — get RPC connection working, log latest block
-3.  src/utils/wallet.ts — load keypair, print public key + balance
-4.  src/listener/tokenListener.ts — log detected tokens to console (no buying yet)
-5.  src/filters/ (all 5) — test each filter against known rug and legit tokens
-    holderConcentration is new; test it against a known bundled launch
-6.  src/utils/jito.ts — test with a tiny dummy transaction; verify retry logic fires
-7.  src/trading/priceOracle.ts — test both REST and on-chain fallback paths
-8.  src/trading/buyEngine.ts — run with DRY_RUN=true first; then test with 0.01 SOL
-9.  src/trading/positionManager.ts — mock a position, test polling + partialSold logic
-10. src/trading/sellEngine.ts — run with DRY_RUN=true first; then test live sell
-11. src/logger/ — verify [DRY] prefixing works; check trades.log output
-12. src/index.ts — wire everything, run full pipeline in DRY_RUN for at least 1 hour
-    before switching to live trading
+---
 
-=== HARD RULES ===
-- NEVER send transactions without Jito. Regular txs are too slow.
-- NEVER buy if any single filter fails. One rule exists for a reason.
-- NEVER use the 0.5 SOL gas reserve for trades under any circumstances.
-- NEVER run the bot with real money until steps 1–7 are confirmed working in DRY_RUN.
-- NEVER store WALLET_PRIVATE_KEY anywhere except .env. Never log it.
-- NEVER exceed MAX_POSITIONS. Add a hard check in buyEngine.ts.
-- NEVER remove the DRY_RUN check from buyEngine or sellEngine. It must always exist.
-- ALWAYS log every filter rejection with the reason. You need this data.
-- ALWAYS test new filter logic against historical known rugs before deploying.
-- ALWAYS have a kill switch: CTRL+C gracefully closes WS and logs state.
-- ALWAYS implement the on-chain price fallback in priceOracle.ts before going live.
-- ALWAYS compile to JS and run with node for production 24/7 operation, not tsx.
+## BUILD ORDER
+Build and TEST each step before proceeding. Never skip ahead.
 
-=== KNOWN RISKS ===
-- Competing snipers: other bots are watching the same logs. Your filters are
-  your moat — speed alone won't save you if you buy rugs.
-- Filter latency eating your speed edge: rugHistory (~200–500ms) and metadata
-  (~1–3s for Arweave/IPFS) are the slowest filters. Accept this tradeoff.
-  The alternative (buying first, filtering second, selling on fail) is faster
-  but increases rug exposure. Do not change the filter-first approach without
-  very deliberate testing.
-- Jito tip wars: during high activity, tips spike to 0.01–0.02 SOL per bundle.
-  Dynamic tip scaling in jito.ts handles this. Budget JITO_TIP_MAX = 0.02 SOL.
-- Bundle detection evasion: sophisticated bundlers spread buys across 2–3 slots.
-  Monitor your FILTER_FAIL logs. If bundled rugs keep slipping through, tighten
-  the slot range and lower the wallet threshold in bundleDetect.ts.
-- Holder concentration gap: mintAuthority null does not mean supply is safe.
-  holderConcentration filter closes this gap, but 15% threshold may need tuning.
-  Watch for tokens where holderConcentration passes but price still crashes fast.
-- pump-fun-sdk breakage: pump.fun has changed bonding curve contracts before.
-  If buy/sell SDK calls fail consistently, fall back to raw IDL transactions.
-  Keep /src/idl/pump_fun.json up to date.
-- RPC rate limits: Helius free tier throttles under load. Cache aggressively,
-  batch requests where possible. Upgrade to Growth plan (~$49/mo) proactively.
-- Pump.fun API downtime: priceOracle.ts fallback to on-chain reads handles this.
-  Test the fallback path explicitly before going live.
-- False filter passes: no filter is perfect. Even passing all 5 checks, ~60–70%
-  of tokens will still lose. This is expected. Sizing and stop-losses absorb this.
-- Partial sell + time stop interaction: after a 70% TP sell, the time stop and
-  stop loss operate on the remaining 30% only. positionManager must track
-  remainingTokens accurately. Incorrect accounting here will cause wrong sell
-  sizes and corrupted PnL data.
+1. `config.ts` — all constants including `DRY_RUN`, `HOLDER_CONCENTRATION_LIMIT`
+2. `.env` + `src/utils/rpc.ts` — connect to Helius, log latest block number
+3. `src/utils/wallet.ts` — load keypair, print pubkey + balance
+4. `src/listener/tokenListener.ts` — log detected tokens to console only (no buying)
+5. `src/filters/` (all 5) — test each against known rug + legit tokens
+6. `src/utils/jito.ts` — test dummy tx on devnet, verify retry logic fires
+7. `src/trading/priceOracle.ts` — test both REST and on-chain fallback paths explicitly
+8. `src/trading/buyEngine.ts` — DRY_RUN=true first, then 0.01 SOL live test
+9. `src/trading/positionManager.ts` — mock position, test `partialSold` logic
+10. `src/trading/sellEngine.ts` — DRY_RUN=true first, then live sell on step 8 position
+11. `src/logger/` — verify `[DRY]` prefix, check `trades.log` output
+12. `src/index.ts` — wire everything, run full pipeline DRY_RUN for ≥1 hour before live
+
+---
+
+## HARD RULES
+- NEVER send txs without Jito. Regular txs are too slow.
+- NEVER buy if any single filter fails.
+- NEVER use the 0.5 SOL gas reserve for trades.
+- NEVER run with real money until steps 1–7 confirmed in DRY_RUN.
+- NEVER store `WALLET_PRIVATE_KEY` outside `.env`. Never log it.
+- NEVER exceed `MAX_POSITIONS`. Hard check in `buyEngine.ts`.
+- NEVER remove the `DRY_RUN` check from `buyEngine` or `sellEngine`.
+- ALWAYS log every filter rejection with the reason.
+- ALWAYS test filter changes against historical known rugs before deploying.
+- ALWAYS implement on-chain price fallback before going live.
+- ALWAYS compile to JS (`node`) for production, not `tsx`.
+- ALWAYS handle CTRL+C gracefully: close WebSocket, log final state.
+
+---
+
+## KNOWN RISKS
+
+**Competing snipers** — other bots watch the same logs. Filters are your moat, not speed alone.
+
+**Filter latency** — `rugHistory` (~200–500ms) and `metadata` (~1–3s Arweave) eat into speed. Accept this tradeoff. Buying before filtering = faster entry but higher rug exposure. Do not change without deliberate testing.
+
+**Jito tip wars** — spikes to 0.01–0.02 SOL during viral launches. Dynamic tip scaling in `jito.ts` handles this. `JITO_TIP_MAX = 0.02` is your ceiling.
+
+**Bundle detection evasion** — sophisticated bundlers spread across 2–3 slots. Watch `FILTER_FAIL` logs. If bundled rugs slip through, tighten slot range and lower wallet threshold in `bundleDetect.ts`.
+
+**Holder concentration gap** — `mintAuthority=null` doesn't mean supply is safe. `holderConcentration` filter closes this. 15% threshold may need tuning — watch for tokens that pass but dump fast.
+
+**pump-fun-sdk breakage** — pump.fun has changed bonding curve contracts before. Keep `/src/idl/pump_fun.json` current. Raw IDL fallback must be implemented.
+
+**RPC rate limits** — Helius free tier throttles under load. Cache aggressively, batch requests. Upgrade to Growth proactively.
+
+**Pump.fun API downtime** — `priceOracle.ts` fallback handles this. Test the fallback path explicitly before going live.
+
+**False filter passes** — no filter is perfect. ~60–70% of tokens that pass all 5 filters will still lose. Expected. Sizing + stop-losses absorb this.
+
+**Partial sell accounting** — after 70% TP sell, time stop and SL operate on remaining 30% only. `positionManager` must track `remainingTokens` accurately. Wrong accounting = wrong sell
