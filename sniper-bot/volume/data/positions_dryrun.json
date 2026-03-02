@@ -1,0 +1,85 @@
+{
+  "CjsbSWY55oagVu7wqzP2PFMQkh2iQt7dpxMrTX54pump": {
+    "tokenData": {
+      "mint": "CjsbSWY55oagVu7wqzP2PFMQkh2iQt7dpxMrTX54pump",
+      "devWallet": "2dtoo6saniPZxogcAMbyrBFJ2cAe8MGJDkig1DcVeD9J",
+      "timestamp": 1772477768563,
+      "devBuyLamports": 3009691811,
+      "name": "ARM Robot: The CAPTCHA ",
+      "symbol": "ArmRobot",
+      "description": "YO I found something viral, hilarious, and weird at the same time. This dude on TikTok built a cartoon robot called ARM Robot and it literally just solves captchas. It blew up with 10M+ views across the videos. He dropped his GitHub, so we can credit him properly.",
+      "image_uri": "https://ipfs.io/ipfs/bafybeicoqyvseu5rhyvo6ccn5g2tmvf7m6hxhxglnf5qqo43fgzqaqnoca",
+      "twitter": "https://x.com/BABYRUCCI/status/2027447774434775204",
+      "website": "https://www.tiktok.com/@youness.makhchan/video/7606697480377617685"
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772477769746,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "DJwa4JxMPmuFMGwYPC1hhG6MQ3TErnT48abVwzXtpump": {
+    "tokenData": {
+      "mint": "DJwa4JxMPmuFMGwYPC1hhG6MQ3TErnT48abVwzXtpump",
+      "devWallet": "7XtAHRiRTYBcXBKrEXghTE6axXnPfihHWiUY7XN2x7Ww",
+      "timestamp": 1772477801638,
+      "devBuyLamports": 2009844479,
+      "name": "Jeff Bezos Memes",
+      "symbol": "BEZOSMEME",
+      "description": "",
+      "image_uri": "https://ipfs.io/ipfs/QmU5UnWpsrwy9V3EsJsHKZkojvsy1jKg7Ldjujd8bXZswP",
+      "twitter": "https://x.com/kshvbgde/status/2028430126103539867?s=46"
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772477803809,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": true
+  }
+}

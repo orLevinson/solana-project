@@ -5,7 +5,7 @@ import { DRY_RUN } from '../../config';
 
 export type LogLevel = 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS';
 
-const LOG_FILE = path.join(process.cwd(), 'volume', 'logs', 'sniper.log');
+const LOG_FILE = path.join(process.cwd(), 'volume', 'logs', DRY_RUN ? 'sniper_dryrun.log' : 'sniper.log');
 fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
 
 // Helpers

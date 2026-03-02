@@ -12,7 +12,7 @@ dotenv.config();
 // The on-chain program address for pump.fun. All token launches
 // emit logs from this address — this is what the WebSocket listens to.
 export const PUMP_FUN_PROGRAM_ID = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
-export const PUMP_FUN_REST_API = 'https://api.pump.fun/tokens';
+export const PUMP_FUN_REST_API = 'https://frontend-api-v3.pump.fun/coins';
 
 // ─────────────────────────────────────────────────────────────
 // CAPITAL & POSITION SIZING

@@ -1,6 +1,6 @@
 import { getPrice } from './priceOracle';
 import { logger } from '../logger/logger';
-import { PRICE_POLL_INTERVAL, EXIT_STRATEGY, TpStep } from '../../config';
+import { PRICE_POLL_INTERVAL, EXIT_STRATEGY, TpStep, DRY_RUN } from '../../config';
 import { NewTokenEvent } from '../listener/tokenListener';
 import { createStore } from '../utils/jsonStore';
 
@@ -17,13 +17,17 @@ export interface Position {
     isProcessing: boolean;
 }
 
-const store = createStore<Position>('positions');
+const store = DRY_RUN ? createStore<Position>('positions_dryrun') : createStore<Position>('positions');
 
-const cachedStore = new Map<string, Position>(
+export const cachedStore = new Map<string, Position>(
     Object.entries(store.getAll())
         .filter(([, p]) => p.status === 'active')
         .map(([k, p]) => [k, { ...p, isProcessing: false }]) // reset stale locks from crash
 );
+
+export function getHistoryStore() {
+    return store;
+}
 
 export function addPosition(tokenData: NewTokenEvent, solSpent: number, tokensBought: number) {
     const entryPrice = solSpent / tokensBought;

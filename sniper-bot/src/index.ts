@@ -7,6 +7,10 @@ import { checkHolderConcentration } from './filters/holderConcentration';
 import { logger } from './logger/logger';
 import { DRY_RUN } from '../config';
 import { initializeGlobal } from './utils/globalState';
+import { executeBuy } from './trading/buyEngine';
+import { executeSell } from './trading/sellEngine';
+import { monitorLoop, getPositionCount } from './trading/positionManager';
+import { startApiServer } from './api/server';
 
 async function processNewToken(token: NewTokenEvent) {
     logger.info(`\n🚀 NEW TOKEN DETECTED: ${token.mint}`);
@@ -32,21 +36,35 @@ async function processNewToken(token: NewTokenEvent) {
     // --- ALL FILTERS PASSED ---
     logger.success(`\n💎 TOKEN PASSED ALL FILTERS! Ready to buy: ${token.mint}\n`);
 
-    if (DRY_RUN) {
-        logger.info(`[DRY RUN] Would execute buy for ${token.mint} here`);
-    } else {
-        // Buy logic will go here
-    }
+    const positionCount = getPositionCount();
+    await executeBuy(token, positionCount);
 }
 
 // Start bot
 (async () => {
     await initializeGlobal();
+    startApiServer();
     logger.info(`Starting sniper bot... DRY_RUN=${DRY_RUN}`);
+
+    // Start background monitor loop for open positions
+    monitorLoop(
+        async (pos, sellPct) => { await executeSell(pos, sellPct, 'TP'); },
+        async (pos) => { await executeSell(pos, 1.0, 'SL'); },
+        async (pos) => { await executeSell(pos, 1.0, 'TIME_STOP'); }
+    ).catch((err: any) => {
+        logger.error('Monitor loop crashed', { err: String(err) });
+    });
+
     startTokenListener((token: NewTokenEvent) => {
         // We launch processing asynchronously so the listener isn't blocked
         processNewToken(token).catch(err => {
             logger.error('Error in processing pipeline', { mint: token.mint, err: String(err) });
         });
+    });
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+        logger.warning('\n[SYSTEM] Caught interrupt signal (CTRL+C). Shutting down...');
+        setTimeout(() => process.exit(0), 1000);
     });
 })();

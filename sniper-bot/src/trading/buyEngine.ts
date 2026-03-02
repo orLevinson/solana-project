@@ -9,22 +9,20 @@ import { logger } from "../logger/logger";
 import { NewTokenEvent } from "../listener/tokenListener";
 import { DRY_RUN, MAX_POSITIONS, GAS_RESERVE, BUY_SIZE, JITO_TIP, SLIPPAGE, COMPUTE_UNIT_LIMIT, COMPUTE_UNIT_PRICE } from "../../config";
 import { getGlobal } from "../utils/globalState";
+import { dryRunState } from "../utils/dryRun";
 import { addPosition } from "./positionManager";
 
 export async function executeBuy(token: NewTokenEvent, positionCount: number): Promise<boolean> {
-    if (DRY_RUN) {
-        logger.info(`[DRY RUN] Would buy ${token.symbol} (${token.mint})`, { token });
-        return true;
-    }
-
     try {
         if (positionCount >= MAX_POSITIONS) {
             logger.warning('Buy skipped: MAX_POSITIONS reached', { mint: token.mint, positionCount });
             return false;
         }
 
-        const balanceLamports = await connection.getBalance(wallet.publicKey);
-        const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
+        const balanceSol = DRY_RUN
+            ? await dryRunState.getBalance()
+            : (await connection.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL;
+
         if (balanceSol <= GAS_RESERVE + BUY_SIZE) {
             logger.warning('Buy skipped: balance too low', {
                 mint: token.mint,
@@ -62,6 +60,21 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
         const minTokenAmount = tokenAmount
             .muln(10_000 - Math.floor(SLIPPAGE * 10_000))
             .divn(10_000);
+
+        if (DRY_RUN) {
+            // Deduct SOL: BUY_SIZE + ~1% pump limit fee + tip
+            const totalSolCost = BUY_SIZE * 1.01 + JITO_TIP;
+            dryRunState.updateBalance(-totalSolCost);
+
+            logger.info(`[DRY RUN] Virtual buy executed`, {
+                mint: token.mint,
+                spent: totalSolCost.toFixed(4),
+                tokensReceived: minTokenAmount.toString()
+            });
+
+            addPosition(token, totalSolCost, minTokenAmount.toNumber());
+            return true;
+        }
 
         const instructions = await PUMP_SDK.buyInstructions({
             global,
