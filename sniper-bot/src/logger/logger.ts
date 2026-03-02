@@ -5,7 +5,7 @@ import { DRY_RUN } from '../../config';
 
 export type LogLevel = 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS';
 
-const LOG_FILE = path.join(process.cwd(), 'logs', 'sniper.log');
+const LOG_FILE = path.join(process.cwd(), 'volume', 'logs', 'sniper.log');
 fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
 
 // Helpers
@@ -31,10 +31,10 @@ function formatDetails(details: Record<string, unknown>): string {
 // Level config
 
 const LEVEL_CONFIG: Record<LogLevel, { color: chalk.Chalk; emoji: string; label: string }> = {
-    ERROR:   { color: chalk.red,          emoji: '❌', label: 'ERROR  ' },
-    WARNING: { color: chalk.yellow,       emoji: '⚠️ ', label: 'WARN   ' },
-    INFO:    { color: chalk.cyan,         emoji: '·  ', label: 'INFO   ' },
-    SUCCESS: { color: chalk.greenBright,  emoji: '✅', label: 'PASS   ' },
+    ERROR: { color: chalk.red, emoji: '❌', label: 'ERROR  ' },
+    WARNING: { color: chalk.yellow, emoji: '⚠️ ', label: 'WARN   ' },
+    INFO: { color: chalk.cyan, emoji: '·  ', label: 'INFO   ' },
+    SUCCESS: { color: chalk.greenBright, emoji: '✅', label: 'PASS   ' },
 };
 
 // Core log function
@@ -54,11 +54,11 @@ function log(level: LogLevel, msg: string, details: Record<string, unknown> = {}
 
     // Console: human-readable
     const { color, emoji, label } = LEVEL_CONFIG[level];
-    const ts     = chalk.gray(`[${timestamp()}]`);
-    const dry    = DRY_RUN ? chalk.gray('[DRY] ') : '';
-    const lvl    = color(label);
-    const text   = color(msg);
-    const extra  = formatDetails(details);
+    const ts = chalk.gray(`[${timestamp()}]`);
+    const dry = DRY_RUN ? chalk.gray('[DRY] ') : '';
+    const lvl = color(label);
+    const text = color(msg);
+    const extra = formatDetails(details);
 
     console.log(`${ts} ${dry}${emoji}  ${lvl} ${text}${extra}`);
 }
@@ -66,8 +66,8 @@ function log(level: LogLevel, msg: string, details: Record<string, unknown> = {}
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export const logger = {
-    error:   (msg: string, details?: Record<string, unknown>) => log('ERROR',   msg, details),
+    error: (msg: string, details?: Record<string, unknown>) => log('ERROR', msg, details),
     warning: (msg: string, details?: Record<string, unknown>) => log('WARNING', msg, details),
-    info:    (msg: string, details?: Record<string, unknown>) => log('INFO',    msg, details),
+    info: (msg: string, details?: Record<string, unknown>) => log('INFO', msg, details),
     success: (msg: string, details?: Record<string, unknown>) => log('SUCCESS', msg, details),
 };

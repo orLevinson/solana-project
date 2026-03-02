@@ -27,22 +27,32 @@ export const BUY_SIZE = 0.1;   // SOL per trade
 export const MAX_POSITIONS = 5;     // max concurrent open positions
 export const GAS_RESERVE = 0.5;   // SOL reserved for gas — never trade below this
 
-// ─────────────────────────────────────────────────────────────
-// EXIT CONDITIONS
-// ─────────────────────────────────────────────────────────────
-// TAKE_PROFIT: At 2x entry, sell 70% of position via Jito.
-//   The remaining 30% rides with a tighter stop loss.
-// STOP_LOSS: At -40% (0.6x entry), sell everything immediately.
-//   No hesitation. Capital preservation over hope.
-// TRAILING_STOP_AFTER_TP: After the 70% TP sell, the stop loss
-//   on the remaining 30% moves up to 1.5x entry (locking profit).
-// TIME_STOP_MINUTES: If a position is still open after 10 minutes
-//   AND below TIME_STOP_MIN_MULT, sell everything. Flat = done.
-export const TAKE_PROFIT = 2.0;  // x multiplier → sell 70%
-export const STOP_LOSS = 0.6;  // x multiplier → sell 100% (−40%)
-export const TRAILING_STOP_AFTER_TP = 1.5;  // x — new SL floor after partial TP
-export const TIME_STOP_MINUTES = 10;   // minutes before time stop activates
-export const TIME_STOP_MIN_MULT = 1.2;  // x — must be above this to avoid time stop
+// Each step: at `mult` × entry price, sell `sellPct` of remaining tokens,
+// then move the stop loss floor to `newSL` × entry price.
+export interface TpStep {
+    mult: number;  // trigger multiplier (e.g. 2.0 = 2x)
+    sellPct: number;  // fraction of remainingTokens to sell (0.70 = 70%)
+    newSL: number;  // stop loss floor after this step triggers
+}
+
+export interface ExitStrategy {
+    startSL: number;    // initial stop loss multiplier (e.g. 0.6 = −40%)
+    tpSteps: TpStep[];  // ordered array of take-profit steps
+    timeStopMins: number;    // minutes before time stop activates
+    timeStopMinMult: number;   // must be above this multiplier to avoid time stop
+}
+
+export const EXIT_STRATEGY: ExitStrategy = {
+    startSL: 0.6,   // initial floor: −40%
+    timeStopMins: 10,    // flat positions exit after 10min
+    timeStopMinMult: 1.2,   // must be >1.2x to stay open past time stop
+    tpSteps: [
+        { mult: 2.0, sellPct: 0.70, newSL: 1.5 },   // 2x → sell 70%, floor at 1.5x
+        { mult: 5.0, sellPct: 0.50, newSL: 3.0 },   // 5x → sell 50% of rest, floor at 3x
+        { mult: 10.0, sellPct: 1.00, newSL: 3.0 },  // 10x → close everything
+    ],
+};
+
 
 // ─────────────────────────────────────────────────────────────
 // EXECUTION (JITO)

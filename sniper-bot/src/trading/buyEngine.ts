@@ -1,13 +1,15 @@
 import { PublicKey, LAMPORTS_PER_SOL, Transaction, ComputeBudgetProgram } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";
-import { PUMP_SDK, GLOBAL_PDA, bondingCurvePda, getBuyTokenAmountFromSolAmount } from "@pump-fun/pump-sdk";
+import { PUMP_SDK, bondingCurvePda, getBuyTokenAmountFromSolAmount } from "@pump-fun/pump-sdk";
 import { connection } from '../utils/rpc';
 import { wallet } from '../utils/wallet';
 import { sendBundle } from "../utils/jito";
 import { logger } from "../logger/logger";
 import { NewTokenEvent } from "../listener/tokenListener";
 import { DRY_RUN, MAX_POSITIONS, GAS_RESERVE, BUY_SIZE, JITO_TIP, SLIPPAGE, COMPUTE_UNIT_LIMIT, COMPUTE_UNIT_PRICE } from "../../config";
+import { getGlobal } from "../utils/globalState";
+import { addPosition } from "./positionManager";
 
 export async function executeBuy(token: NewTokenEvent, positionCount: number): Promise<boolean> {
     if (DRY_RUN) {
@@ -35,19 +37,17 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
         const mintPublicKey = new PublicKey(token.mint);
         const bondingCurvePDA = bondingCurvePda(token.mint);
         const userAta = getAssociatedTokenAddressSync(mintPublicKey, wallet.publicKey, true, TOKEN_PROGRAM_ID);
-
-        const [globalInfo, bondingCurveInfo, userAtaInfo] = await Promise.all([
-            connection.getAccountInfo(GLOBAL_PDA),
+        const global = getGlobal();
+        const [bondingCurveInfo, userAtaInfo] = await Promise.all([
             connection.getAccountInfo(bondingCurvePDA),
             connection.getAccountInfo(userAta),
         ]);
 
-        if (!globalInfo || !bondingCurveInfo) {
+        if (!bondingCurveInfo) {
             logger.warning('Buy skipped: missing account info', { mint: token.mint });
             return false;
         }
 
-        const global = PUMP_SDK.decodeGlobal(globalInfo);
         const bondingCurve = PUMP_SDK.decodeBondingCurve(bondingCurveInfo);
 
         const solLamports = new BN(Math.floor(BUY_SIZE * LAMPORTS_PER_SOL));
@@ -83,6 +83,7 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
 
         const bundleId = await sendBundle(tx, wallet.keypair, JITO_TIP);
         logger.info('Buy bundle sent', { mint: token.mint, bundleId });
+        addPosition(token, BUY_SIZE, tokenAmount.toNumber());
         return true;
     } catch (err) {
         logger.error('Buy failed with exception', { mint: token.mint, err: String(err) });
