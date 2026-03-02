@@ -3,28 +3,15 @@ import { PUMP_FUN_PROGRAM_ID } from '../../config';
 import { PublicKey } from '@solana/web3.js';
 import { logger } from '../logger/logger';
 
-// ─────────────────────────────────────────────────────────────
-// The event emitted for every newly detected pump.fun token.
-//
-// The listener's job is to be FAST and LEAN:
-// - mint and devWallet come straight from accountKeys (no extra RPC)
-// - name/symbol/metadataUrl are left to the metadata filter (Step 5)
-//   which fetches the Arweave/IPFS JSON and also checks for socials.
-// ─────────────────────────────────────────────────────────────
 export interface NewTokenEvent {
-    mint:      string;   // token mint address
-    devWallet: string;   // address that paid for / created the token
-    timestamp: number;   // ms since epoch — used by time stop logic
+    mint:           string;  // token mint address
+    devWallet:      string;  // address that paid for / created the token
+    timestamp:      number;  // ms since epoch — used by time stop logic
+    devBuyLamports: number;  // SOL the dev spent at launch (from balance delta)
 }
 
 type TokenCallback = (token: NewTokenEvent) => void;
 
-// ─────────────────────────────────────────────────────────────
-// Subscribes to pump.fun program logs via Helius WebSocket.
-// Every new token creation emits "InitializeMint2" in its logs.
-// On detection: fetch the transaction, extract mint + dev wallet,
-// fire the callback. Everything else is handled downstream.
-// ─────────────────────────────────────────────────────────────
 export function startTokenListener(onToken: TokenCallback): void {
     const programPublicKey = new PublicKey(PUMP_FUN_PROGRAM_ID);
     console.log('[Listener] Listening for new token launches on pump.fun...');
@@ -54,7 +41,12 @@ export function startTokenListener(onToken: TokenCallback): void {
             const devWallet = accountKeys[0].pubkey.toBase58();
             const mint      = accountKeys[1].pubkey.toBase58();
 
-            const event: NewTokenEvent = { mint, devWallet, timestamp: Date.now() };
+            // Compute how much SOL the dev spent (buy + fees) from balance delta
+            const preBalance  = tx.meta?.preBalances[0]  ?? 0;
+            const postBalance = tx.meta?.postBalances[0] ?? 0;
+            const devBuyLamports = Math.max(0, preBalance - postBalance);
+
+            const event: NewTokenEvent = { mint, devWallet, timestamp: Date.now(), devBuyLamports };
 
             logger.info('[Listener] Token ready!', { mint, devWallet });
             onToken(event);

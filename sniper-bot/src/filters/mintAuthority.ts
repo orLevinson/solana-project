@@ -1,4 +1,4 @@
-import { getMint } from "@solana/spl-token";
+import { getMint, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { connection } from "../utils/rpc";
 import { logger } from "../logger/logger";
@@ -14,7 +14,14 @@ export async function checkMintAuthority(token: NewTokenEvent): Promise<boolean>
             return false;
         }
 
-        const mintAccount = await getMint(connection, new PublicKey(mint));
+        // Try standard Token Program first (used by pump.fun),
+        // fall back to Token2022 if this mint lives there instead
+        let mintAccount;
+        try {
+            mintAccount = await getMint(connection, new PublicKey(mint), 'confirmed', TOKEN_PROGRAM_ID);
+        } catch {
+            mintAccount = await getMint(connection, new PublicKey(mint), 'confirmed', TOKEN_2022_PROGRAM_ID);
+        }
         if(mintAccount.freezeAuthority !== null){
             logger.warning('FILTER_FAIL: freezeAuthority is still set',{ mint });
             return false;

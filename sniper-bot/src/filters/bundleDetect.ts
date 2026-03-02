@@ -78,13 +78,13 @@ export async function checkBundleDetect(token: NewTokenEvent): Promise<boolean> 
         const buyers1 = slotBuyers.get(1)?.size ?? 0;
         const buyers2 = slotBuyers.get(2)?.size ?? 0;
 
-        if (buyers0 >= BUNDLE_SLOT0_LIMIT) {
+        if (buyers0 > BUNDLE_SLOT0_LIMIT) {
             badWalletCache.set(devWallet, true);
             logger.warning('FILTER_FAIL: bundle detected in slot 0', { mint, devWallet, buyers0 });
             return false;
         }
 
-        if (buyers1 >= BUNDLE_SLOT12_LIMIT || buyers2 >= BUNDLE_SLOT12_LIMIT) {
+        if (buyers1 > BUNDLE_SLOT12_LIMIT || buyers2 > BUNDLE_SLOT12_LIMIT) {
             badWalletCache.set(devWallet, true);
             logger.warning('FILTER_FAIL: bundle detected in slots 1-2', { mint, devWallet, buyers1, buyers2 });
             return false;
