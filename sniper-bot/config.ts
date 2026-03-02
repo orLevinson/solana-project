@@ -73,7 +73,13 @@ export const JITO_TIP = 0.002;  // SOL base tip per bundle
 export const JITO_TIP_MAX = 0.02;   // SOL tip ceiling (tip wars)
 export const JITO_RETRY_SLOTS = 2;      // slots to wait before retry (~800ms)
 export const JITO_TIP_ESCALATE = 1.5;   // tip multiplier on each retry
-export const JITO_BLOCK_ENGINE_URL = 'https://frankfurt.mainnet.block-engine.jito.wtf';
+export const JITO_ENDPOINTS = [
+    'https://mainnet.block-engine.jito.wtf',          // NY
+    'https://frankfurt.mainnet.block-engine.jito.wtf', // Frankfurt
+    'https://amsterdam.mainnet.block-engine.jito.wtf', // Amsterdam
+    'https://tokyo.mainnet.block-engine.jito.wtf',     // Tokyo
+];
+export const JITO_BLOCK_ENGINE_URL = JITO_ENDPOINTS[1];
 export const COMPUTE_UNIT_LIMIT = 200_000;  // max compute units per tx
 export const COMPUTE_UNIT_PRICE = 10_000;   // microlamports per compute unit
 

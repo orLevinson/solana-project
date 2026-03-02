@@ -96,16 +96,54 @@ export async function executeSell(
             .add(...instructions);
 
 
-        const bundleId = await sendBundle(tx, wallet.keypair, JITO_TIP);
-        logger.info('Sell executed', { mint: pos.tokenData.mint, bundleId, reason, tokensToSell });
+        const { bundleId, signature } = await sendBundle(tx, wallet.keypair, JITO_TIP);
+        logger.info('Sell bundle sent to Jito. Assuming executed.', { mint: pos.tokenData.mint, bundleId, signature, reason, tokensToSell });
+
+        const previousRemaining = pos.remainingTokens;
 
         if (sellPct >= 1.0) {
             removePosition(pos.tokenData.mint);
         } else {
             updatePosition(pos.tokenData.mint, { remainingTokens: pos.remainingTokens - tokensToSell.toNumber() });
         }
-        return true;
 
+        // Asynchronously poll for actual on-chain confirmation
+        import("../utils/jito").then(async ({ pollSignatureConfirmation }) => {
+            try {
+                const confirmed = await pollSignatureConfirmation(signature);
+                if (confirmed) {
+                    logger.success(`On-chain sell confirmed!`, { mint: pos.tokenData.mint, signature, reason });
+                } else {
+                    logger.warning(`Sell bundle was dropped by network. Rolling back position state.`, { mint: pos.tokenData.mint });
+                    import("./positionManager").then(({ updatePosition, cachedStore, store }) => {
+                        // If we removed it, we need to put it back into active tracking
+                        if (sellPct >= 1.0) {
+                            pos.status = 'active';
+                            pos.isProcessing = false;
+                            cachedStore.set(pos.tokenData.mint, pos);
+                            store.set(pos.tokenData.mint, pos);
+                        } else {
+                            updatePosition(pos.tokenData.mint, { remainingTokens: previousRemaining, isProcessing: false });
+                        }
+                    });
+                }
+            } catch (err) {
+                logger.error(`Error polling sell confirmation`, { mint: pos.tokenData.mint, err: String(err) });
+                import("./positionManager").then(({ updatePosition, cachedStore, store }) => {
+                    // Rollback on polling error just to be safe
+                    if (sellPct >= 1.0) {
+                        pos.status = 'active';
+                        pos.isProcessing = false;
+                        cachedStore.set(pos.tokenData.mint, pos);
+                        store.set(pos.tokenData.mint, pos);
+                    } else {
+                        updatePosition(pos.tokenData.mint, { remainingTokens: previousRemaining, isProcessing: false });
+                    }
+                });
+            }
+        });
+
+        return true;
 
     } catch (err) {
         logger.error(`[SellEngine] Sell failed for ${pos.tokenData.symbol ?? "unknown"} (${pos.tokenData.mint})`, { err: String(err) });

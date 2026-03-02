@@ -17,7 +17,7 @@ export interface Position {
     isProcessing: boolean;
 }
 
-const store = DRY_RUN ? createStore<Position>('positions_dryrun') : createStore<Position>('positions');
+export const store = DRY_RUN ? createStore<Position>('positions_dryrun') : createStore<Position>('positions');
 
 export const cachedStore = new Map<string, Position>(
     Object.entries(store.getAll())

@@ -94,9 +94,33 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
             .add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE }))
             .add(...instructions);
 
-        const bundleId = await sendBundle(tx, wallet.keypair, JITO_TIP);
-        logger.info('Buy bundle sent', { mint: token.mint, bundleId });
+        const { bundleId, signature } = await sendBundle(tx, wallet.keypair, JITO_TIP);
+        logger.success('Buy bundle accepted by Jito. Assuming position is open!', { mint: token.mint, bundleId, signature });
+
+        // Optimistically register the position immediately so we can start tracking price
         addPosition(token, BUY_SIZE, tokenAmount.toNumber());
+
+        // Asynchronously poll for actual on-chain confirmation
+        // We don't await this because we want to return extremely fast
+        import("../utils/jito").then(async ({ pollSignatureConfirmation }) => {
+            try {
+                const confirmed = await pollSignatureConfirmation(signature);
+                if (confirmed) {
+                    logger.success(`On-chain buy confirmed!`, { mint: token.mint, signature });
+                } else {
+                    logger.warning(`Buy bundle was dropped by network. Rolling back position.`, { mint: token.mint });
+                    import("./positionManager").then(({ removePosition }) => {
+                        removePosition(token.mint);
+                    });
+                }
+            } catch (err) {
+                logger.error(`Error polling buy confirmation`, { mint: token.mint, err: String(err) });
+                import("./positionManager").then(({ removePosition }) => {
+                    removePosition(token.mint);
+                });
+            }
+        });
+
         return true;
     } catch (err) {
         logger.error('Buy failed with exception', { mint: token.mint, err: String(err) });

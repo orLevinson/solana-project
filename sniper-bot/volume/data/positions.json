@@ -1,0 +1,131 @@
+{
+  "GFgNUG3ayA99jfEEwf5zs1SpyakBtpnfEkzwGwNjvnSF": {
+    "tokenData": {
+      "mint": "GFgNUG3ayA99jfEEwf5zs1SpyakBtpnfEkzwGwNjvnSF",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772479287016,
+      "devBuyLamports": 5011141520,
+      "name": "Justice for Ryder",
+      "symbol": "RYDER",
+      "description": "",
+      "image_uri": "https://thumbnails.padre.gg/SOLANA-GzbqNomupzJpFvxPSGTdyDbe99mQgtwAtPoN3YUBpump",
+      "twitter": "https://www.foxnews.com/us/texas-college-student-identified-among-victims-austin-bar-shooting-probed-possible-terror-attack",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772479289791,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "active",
+    "isProcessing": false
+  },
+  "DqAazjEdeWqiotk55HygupRLFisdqeUfxiuzDhR8KiKe": {
+    "tokenData": {
+      "mint": "DqAazjEdeWqiotk55HygupRLFisdqeUfxiuzDhR8KiKe",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772479784285,
+      "devBuyLamports": 5011092800,
+      "name": "World Monitor",
+      "symbol": "WM",
+      "description": "",
+      "image_uri": "https://pbs.twimg.com/card_img/2026417165893505025/Ci_AMA0t?format=jpg&name=600x314",
+      "twitter": "https://x.com/eliehabib/status/2028553309091708997",
+      "telegram": "",
+      "website": "https://github.com/koala73/worldmonitor"
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772479788515,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": true
+  },
+  "FvVJvEZ3A4vfnfXptdPCugWXiSn7X6wVMSmvuXiQ4e4E": {
+    "tokenData": {
+      "mint": "FvVJvEZ3A4vfnfXptdPCugWXiSn7X6wVMSmvuXiQ4e4E",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772480778681,
+      "devBuyLamports": 5011127600,
+      "name": "the pika runners",
+      "symbol": "pika",
+      "description": "",
+      "image_uri": "https://pbs.twimg.com/media/HCbiTCyWoAALjk7.jpg",
+      "twitter": "https://x.com/Dexerto/status/2028557501965169038",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772480780768,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "active",
+    "isProcessing": false
+  }
+}

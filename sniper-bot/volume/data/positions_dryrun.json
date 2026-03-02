@@ -81,5 +81,216 @@
     "stopLoss": 3,
     "status": "sold",
     "isProcessing": true
+  },
+  "BZCmsqM7SkBwno3nr8apubQEYvAkzmRHUAhnCJUrpump": {
+    "tokenData": {
+      "mint": "BZCmsqM7SkBwno3nr8apubQEYvAkzmRHUAhnCJUrpump",
+      "devWallet": "7RWGoXwBfNCcGnyTUDwYTTR4ZQYE2YwKLrBY43mWJnee",
+      "timestamp": 1772478553897,
+      "devBuyLamports": 509469069,
+      "name": "MISSOL",
+      "symbol": "MISSOL",
+      "description": "Solana primed to SEND.  its gonna be A #MISSOL",
+      "image_uri": "https://ipfs.io/ipfs/bafkreifdltzxff3m3qihltydtptnntwj4g3o3yjksj2nd4grmzdgdafp2m",
+      "twitter": "https://x.com/solana/status/2028123093495886227?s=20"
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772478555257,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "7VzrNRdN2vLLqcpukMjjdJgiNeWC3z29zsCriVDqxRJP": {
+    "tokenData": {
+      "mint": "7VzrNRdN2vLLqcpukMjjdJgiNeWC3z29zsCriVDqxRJP",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772478576668,
+      "devBuyLamports": 5011113680,
+      "name": "WarClaude",
+      "symbol": "WarClaude",
+      "description": "",
+      "image_uri": "https://axiomtrading.sfo3.cdn.digitaloceanspaces.com/BANGDLeYaDBhQWS5L3eMDG3QNrd9JQuLoo242WSuswrm.webp",
+      "twitter": "https://x.com/KyeGomezB/status/2028548272525131941",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772478577649,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "6fepqXALzKCCa1M1SXRtmpqxz4Fudf8GC2t9p63L8rt": {
+    "tokenData": {
+      "mint": "6fepqXALzKCCa1M1SXRtmpqxz4Fudf8GC2t9p63L8rt",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772478612049,
+      "devBuyLamports": 5011030160,
+      "name": "PVE",
+      "symbol": "PVE",
+      "description": "",
+      "image_uri": "https://pbs.twimg.com/media/HCbaCU6aEAAY0Nj.jpg",
+      "twitter": "https://x.com/AIHegemonyMemes/status/2028548417564352925",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772478612930,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "Fd9JTP3LXao7MVqw5CLHLQFPKMXsCQ9HKezyNNzmQxGP": {
+    "tokenData": {
+      "mint": "Fd9JTP3LXao7MVqw5CLHLQFPKMXsCQ9HKezyNNzmQxGP",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772478613625,
+      "devBuyLamports": 7031737680,
+      "name": "Alcohol\nWeed\nCocaine",
+      "symbol": "AWC",
+      "description": "",
+      "image_uri": "https://twproxy.twproxy.workers.dev/?url=https%3A%2F%2Fpbs.twimg.com%2Fmedia%2FHCbaDmyaUAANPmF.jpg",
+      "twitter": "https://x.com/elonmusk/status/2028548444802154781",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772478614639,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "72BYADjHUppsaMuJEixBzFQtcSdrKfDhxwDL3uNipump": {
+    "tokenData": {
+      "mint": "72BYADjHUppsaMuJEixBzFQtcSdrKfDhxwDL3uNipump",
+      "devWallet": "BzvwuBtneyP4n9VDew4FyH8QuZw6m441xZniUWHvg7yy",
+      "timestamp": 1772478703000,
+      "devBuyLamports": 3039781840,
+      "name": "LaunchOnControl",
+      "symbol": "CTRL",
+      "description": "Launched on discord.gg/uxento",
+      "image_uri": "https://edge.uxento.io/image/4Wy4RDXaqb6HcfxnQZ4Cu5yAHMytXPz6tmfZ34duCTRL",
+      "twitter": "https://x.com/usecontrol_"
+    },
+    "entryPrice": 3.433145146878253e-14,
+    "entryTime": 1772478704054,
+    "solSpent": 0.10300000000000001,
+    "tokensBought": 3000164443780,
+    "remainingTokens": 450024666567,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": true
   }
 }
