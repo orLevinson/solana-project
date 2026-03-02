@@ -4,10 +4,18 @@ import { PublicKey } from '@solana/web3.js';
 import { logger } from '../logger/logger';
 
 export interface NewTokenEvent {
-    mint:           string;  // token mint address
-    devWallet:      string;  // address that paid for / created the token
-    timestamp:      number;  // ms since epoch — used by time stop logic
+    mint: string;  // token mint address
+    devWallet: string;  // address that paid for / created the token
+    timestamp: number;  // ms since epoch — used by time stop logic
     devBuyLamports: number;  // SOL the dev spent at launch (from balance delta)
+    // enriched by metadata filter
+    name?: string;
+    symbol?: string;
+    description?: string;
+    website?: string;
+    image_uri?: string;
+    twitter?: string;
+    telegram?: string;
 }
 
 type TokenCallback = (token: NewTokenEvent) => void;
@@ -39,10 +47,10 @@ export function startTokenListener(onToken: TokenCallback): void {
             // accountKeys[0] = fee payer = the dev/creator (writable signer)
             // accountKeys[1] = mint      = the new token's mint address
             const devWallet = accountKeys[0].pubkey.toBase58();
-            const mint      = accountKeys[1].pubkey.toBase58();
+            const mint = accountKeys[1].pubkey.toBase58();
 
             // Compute how much SOL the dev spent (buy + fees) from balance delta
-            const preBalance  = tx.meta?.preBalances[0]  ?? 0;
+            const preBalance = tx.meta?.preBalances[0] ?? 0;
             const postBalance = tx.meta?.postBalances[0] ?? 0;
             const devBuyLamports = Math.max(0, preBalance - postBalance);
 

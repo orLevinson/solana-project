@@ -64,6 +64,9 @@ export const JITO_TIP_MAX = 0.02;   // SOL tip ceiling (tip wars)
 export const JITO_RETRY_SLOTS = 2;      // slots to wait before retry (~800ms)
 export const JITO_TIP_ESCALATE = 1.5;   // tip multiplier on each retry
 export const JITO_BLOCK_ENGINE_URL = 'https://frankfurt.mainnet.block-engine.jito.wtf';
+export const COMPUTE_UNIT_LIMIT = 200_000;  // max compute units per tx
+export const COMPUTE_UNIT_PRICE = 10_000;   // microlamports per compute unit
+
 
 export const JITO_TIP_ACCOUNTS = [
     "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
