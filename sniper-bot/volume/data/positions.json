@@ -127,5 +127,252 @@
     "stopLoss": 3,
     "status": "active",
     "isProcessing": false
+  },
+  "HKSndkf6bpXBEG3rVoHEspuk3Y2YZXufEg6ERCNvpump": {
+    "tokenData": {
+      "mint": "HKSndkf6bpXBEG3rVoHEspuk3Y2YZXufEg6ERCNvpump",
+      "devWallet": "CtUppVZrxmwc496WnhuyeRRNdptpecMhRyYovwS9AxLA",
+      "timestamp": 1772481668287,
+      "devBuyLamports": 310474242,
+      "name": "X Money",
+      "symbol": "XMONEY",
+      "description": "",
+      "image_uri": "https://ipfs.io/ipfs/bafkreid225vw2bgea7qhhnbojgh46nhnujbdkvkd3e3ilhuiwtas5vn3ly",
+      "twitter": "https://x.com/i/status/2028553117021900960",
+      "website": "https://www.silentauctionpro.com/bidonlinedetail.php?groupId=453&itemNumber=1000&fwd=BidOnline&return=bidonlinegrid.php"
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772481671045,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 1058881568394,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "14UqnHzmGk2RT4xLUdeLXaHGpKEoUntge9ZdmoGepump": {
+    "tokenData": {
+      "mint": "14UqnHzmGk2RT4xLUdeLXaHGpKEoUntge9ZdmoGepump",
+      "devWallet": "CXoUJHtBGnuNR6zJ3zm8nTnNzCwXxFViXh29d1kTJQmK",
+      "timestamp": 1772482385114,
+      "devBuyLamports": 2056375040,
+      "name": "EGIRL",
+      "symbol": "EGIRL",
+      "description": "Deployed using https://j7tracker.io",
+      "image_uri": "https://pbs.twimg.com/profile_images/1847280770743750656/0DkLNOPG.jpg",
+      "twitter": "https://x.com/TheEconomist/status/2028564206233043296",
+      "website": ""
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772482388750,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": true
+  },
+  "5Fv9dsvCtnqLB6i2tzC5sPy65iYvYi73SmqyBo6qpump": {
+    "tokenData": {
+      "mint": "5Fv9dsvCtnqLB6i2tzC5sPy65iYvYi73SmqyBo6qpump",
+      "devWallet": "DH4oDVRcPXzK9x6gAfoVRdw3fHpg5gNVwEivJ2XiN8nc",
+      "timestamp": 1772483406195,
+      "devBuyLamports": 122715520,
+      "name": "SOLANA PIN CA HELLO",
+      "symbol": "READ",
+      "description": "Deployed using https://j7tracker.io",
+      "image_uri": "https://metadata.j7tracker.com/images/57ec60b036084189.png",
+      "twitter": "https://x.com/solana/status/2028551937621184681",
+      "website": "https://axiom.trade/meme/BQP7e4oJTZu48mMJUgYKXUiKBq66WNisQ3sVKpkMWe6g?chain=sol"
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772483410040,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "active",
+    "isProcessing": false
+  },
+  "G6Ptybxw4hNXBLPJLnjLAZezTkBNaBywwLLFwY2Wpump": {
+    "tokenData": {
+      "mint": "G6Ptybxw4hNXBLPJLnjLAZezTkBNaBywwLLFwY2Wpump",
+      "devWallet": "DH4oDVRcPXzK9x6gAfoVRdw3fHpg5gNVwEivJ2XiN8nc",
+      "timestamp": 1772483436760,
+      "devBuyLamports": 122778160,
+      "name": "SOLANA PIN CA HELLO",
+      "symbol": "READ PIN POS",
+      "description": "Deployed using https://j7tracker.io",
+      "image_uri": "https://metadata.j7tracker.com/images/da6a8b79a1bc430d.png",
+      "twitter": "https://x.com/solana/status/2028551937621184681",
+      "website": "https://axiom.trade/meme/BQP7e4oJTZu48mMJUgYKXUiKBq66WNisQ3sVKpkMWe6g?chain=sol"
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772483442638,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 529440784197,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "sold",
+    "isProcessing": false
+  },
+  "DbebjKwdJyAoPPA76HkaKzb3Dbek9CgJERMZuarG493": {
+    "tokenData": {
+      "mint": "DbebjKwdJyAoPPA76HkaKzb3Dbek9CgJERMZuarG493",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772483694034,
+      "devBuyLamports": 5011085840
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772483696949,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 3529605227977,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": true
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": true
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": true
+      }
+    ],
+    "stopLoss": 3,
+    "status": "active",
+    "isProcessing": false
+  },
+  "9sKBr6T6stfUzimssTUr21gZJir1FqLeRFdZiNyyjhQ4": {
+    "tokenData": {
+      "mint": "9sKBr6T6stfUzimssTUr21gZJir1FqLeRFdZiNyyjhQ4",
+      "devWallet": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+      "timestamp": 1772483710516,
+      "devBuyLamports": 5011099760,
+      "name": "sadtopus",
+      "symbol": "sadtopus",
+      "description": "",
+      "image_uri": "https://pbs.twimg.com/media/HCbtfRuacAAhprw.jpg",
+      "twitter": "https://x.com/BillyM2k/status/2028569805629124830",
+      "telegram": "",
+      "website": ""
+    },
+    "entryPrice": 2.8331780338311433e-14,
+    "entryTime": 1772483732198,
+    "solSpent": 0.1,
+    "tokensBought": 3529605227977,
+    "remainingTokens": 3529605227977,
+    "tpSteps": [
+      {
+        "mult": 2,
+        "sellPct": 0.7,
+        "newSL": 1.5,
+        "triggered": false
+      },
+      {
+        "mult": 5,
+        "sellPct": 0.5,
+        "newSL": 3,
+        "triggered": false
+      },
+      {
+        "mult": 10,
+        "sellPct": 1,
+        "newSL": 3,
+        "triggered": false
+      }
+    ],
+    "stopLoss": 0.6,
+    "status": "sold",
+    "isProcessing": false
   }
 }

@@ -69,7 +69,7 @@ export const EXIT_STRATEGY: ExitStrategy = {
 // JITO_TIP_ESCALATE: Multiply tip by this factor on each retry.
 //   1.5x per retry: 0.002 → 0.003 → 0.0045 → ... → JITO_TIP_MAX
 export const SLIPPAGE = 0.15;   // 15% slippage tolerance
-export const JITO_TIP = 0.002;  // SOL base tip per bundle
+export const JITO_TIP = 0.005;  // SOL base tip per bundle
 export const JITO_TIP_MAX = 0.02;   // SOL tip ceiling (tip wars)
 export const JITO_RETRY_SLOTS = 2;      // slots to wait before retry (~800ms)
 export const JITO_TIP_ESCALATE = 1.5;   // tip multiplier on each retry
