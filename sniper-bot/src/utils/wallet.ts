@@ -6,7 +6,8 @@ import { GAS_RESERVE } from "../../config";
 
 dotenv.config();
 
-const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
+// Trim whitespace and remove optional quotes that might have been pasted into .env
+const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY?.trim().replace(/^["'](.+)["']$/, '$1');
 
 if (!WALLET_PRIVATE_KEY) {
     throw new Error("WALLET_PRIVATE_KEY is not defined");

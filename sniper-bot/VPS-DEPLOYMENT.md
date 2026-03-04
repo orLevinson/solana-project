@@ -55,7 +55,7 @@ JITO_BLOCK_ENGINE_URL=https://mainnet.block-engine.jito.wtf
 WALLET_PRIVATE_KEY=YOUR_BASE58_KEY
 
 # Keep false until you want it trading real SOL
-DRY_RUN=true 
+DRY_RUN=false 
 ```
 
 ## Step 4: Configure Caddy (Optional)
