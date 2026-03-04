@@ -4,8 +4,7 @@ This guide will walk you through deploying your Sniper Bot and web Dashboard to 
 
 ## Prerequisites
 1. **A Linux VPS** (Ubuntu 22.04 or 24.04 is highly recommended).
-2. **A Domain Name** (e.g. `yourdomain.com`), with DNS "A Records" pointing to your VPS IP address.
-3. Your code is pushed to a private GitHub repository or ready to transfer via SFTP/scp.
+2. Your code is pushed to a private GitHub repository or ready to transfer via SFTP/scp.
 
 ## Recommended VPS Providers
 For a Solana Sniper Bot running Node.js, you need decent CPU performance and good network connectivity. Here are the best low-cost options:
@@ -59,18 +58,14 @@ WALLET_PRIVATE_KEY=YOUR_BASE58_KEY
 DRY_RUN=true 
 ```
 
-## Step 4: Configure the Domain (Caddy proxy)
-Open the `Caddyfile`:
+## Step 4: Configure Caddy (Optional)
+By default, the `Caddyfile` is configured to listen on port 80. You can leave it exactly as it is to access your dashboard via `http://YOUR-VPS-IP`.
+
+If you decide to get a domain name later, simply open the `Caddyfile`:
 ```bash
 nano Caddyfile
 ```
-Change `yourdomain.com` to your actual domain name. 
-```text
-bot.yourdomain.com {
-    reverse_proxy dashboard:80
-}
-```
-*(Caddy will read this and automatically provision free SSL certificates from Let's Encrypt for HTTPS).*
+And replace `:80` with `yourdomain.com`. *(Caddy will automatically provision free SSL certificates from Let's Encrypt for HTTPS if you do this).*
 
 ---
 
@@ -84,7 +79,7 @@ sudo docker compose up -d --build
 > The `-d` flag means "detached" mode. Docker will build the images and run them silently in the background 24/7, even after you close your SSH terminal!
 
 ## Monitoring and Maintenance
-Your bot is now trading and your dashboard is live at `https://bot.yourdomain.com`.
+Your bot is now trading and your dashboard is live at `http://<YOUR_VPS_IP>`.
 
 **How to view live logs:**
 ```bash

@@ -1,7 +1,6 @@
 # caddy proxy configuration
-# Replace "yourdomain.com" with your actual domain
-
-yourdomain.com {
+# Listen on port 80 (HTTP) for any incoming IP or domain.
+:80 {
     # Proxy all traffic to the dashboard container
     reverse_proxy dashboard:80
 }
