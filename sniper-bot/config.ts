@@ -69,8 +69,8 @@ export const EXIT_STRATEGY: ExitStrategy = {
 // JITO_TIP_ESCALATE: Multiply tip by this factor on each retry.
 //   1.5x per retry: 0.002 → 0.003 → 0.0045 → ... → JITO_TIP_MAX
 export const SLIPPAGE = 0.15;   // 15% slippage tolerance
-export const JITO_TIP = 0.005;  // SOL base tip per bundle
-export const JITO_TIP_MAX = 0.02;   // SOL tip ceiling (tip wars)
+export const JITO_TIP = 0.002;  // SOL base tip per bundle (dynamic tracker raises this automatically)
+export const JITO_TIP_MAX = 0.025;  // SOL tip ceiling — covers 95th percentile even during viral launches
 export const JITO_RETRY_SLOTS = 2;      // slots to wait before retry (~800ms)
 export const JITO_TIP_ESCALATE = 1.5;   // tip multiplier on each retry
 export const JITO_ENDPOINTS = [
@@ -80,8 +80,8 @@ export const JITO_ENDPOINTS = [
     'https://tokyo.mainnet.block-engine.jito.wtf',     // Tokyo
 ];
 export const JITO_BLOCK_ENGINE_URL = JITO_ENDPOINTS[1];
-export const COMPUTE_UNIT_LIMIT = 200_000;  // max compute units per tx
-export const COMPUTE_UNIT_PRICE = 10_000;   // microlamports per compute unit
+export const COMPUTE_UNIT_LIMIT = 200_000;  // max compute units per tx (needs headroom for ATA creation)
+export const COMPUTE_UNIT_PRICE = 10_000;   // microlamports per CU — priority fees are irrelevant inside Jito bundles; Jito validators are paid via tip, not priority fee
 
 
 export const JITO_TIP_ACCOUNTS = [

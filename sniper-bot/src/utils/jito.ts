@@ -24,12 +24,44 @@ export function buildTipTransaction(blockhash: string, payer: Keypair, tipLampor
     return tx;
 }
 
+// ─────────────────────────────────────────────────────────────
+// DYNAMIC JITO TIP TRACKER
+// ─────────────────────────────────────────────────────────────
+let cachedDynamicTip = JITO_TIP;
+
+async function trackJitoTipFloor() {
+    try {
+        const res = await fetch('https://bundles.jito.wtf/api/v1/bundles/tip_floor');
+        if (!res.ok) return;
+        const data = await res.json() as any[];
+        if (data && data.length > 0) {
+            // Using the 75th percentile for strong confirmation chances while avoiding overpaying
+            const p95 = data[0].landed_tips_95th_percentile;
+            if (typeof p95 === 'number') {
+                // Clamp between JITO_TIP (floor) and JITO_TIP_MAX (ceiling).
+                // Without Math.max, the API can return near-zero values and we massively underbid.
+                cachedDynamicTip = Math.max(JITO_TIP, Math.min(JITO_TIP_MAX, p95));
+            }
+        }
+    } catch (e) {
+        // Silent catch — we don't want to spam logs if the tip API temporarily disconnects
+    }
+}
+
+// Poll every 5 seconds in the background
+setInterval(trackJitoTipFloor, 5000);
+trackJitoTipFloor(); // Call once on initialization
+
+export function getDynamicTip(): number {
+    return cachedDynamicTip;
+}
+// ─────────────────────────────────────────────────────────────
+
 export async function sendBundle(
     tx: Transaction | VersionedTransaction,
     payer: Keypair,
-    tipSol: number = JITO_TIP
 ): Promise<{ bundleId: string; signature: string; lastValidBlockHeight: number }> {
-    let currentTip = tipSol;
+    let currentTip = getDynamicTip();
     const maxAttempts = 5;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -45,69 +77,98 @@ export async function sendBundle(
             if (tx instanceof Transaction) {
                 tx.recentBlockhash = blockhash;
                 tx.feePayer = payer.publicKey;
-                tx.signatures = []; // clear any signatures from previous attempt or SDK pre-signing
+                tx.signatures = [];
                 tx.sign(payer);
+
+                logger.info('Transaction signed', {
+                    signature: tx.signatures[0]?.signature
+                        ? bs58.encode(tx.signatures[0].signature)
+                        : 'NULL - SIGNING FAILED',
+                    feePayer: tx.feePayer?.toBase58(),
+                    blockhash: tx.recentBlockhash,
+                    instructionCount: tx.instructions.length,
+                });
+
+                if (!tx.signatures[0]?.signature) {
+                    throw new Error('Transaction signing failed — signature is null');
+                }
+
+                // Simulate once before any network call — catches slippage/account errors
+                // without burning the tip or wasting endpoint slots
+                const simResult = await connection.simulateTransaction(tx);
+                if (simResult.value.err) {
+                    const errStr = JSON.stringify(simResult.value.err);
+                    const logs = simResult.value.logs?.slice(-5).join(' | ') ?? '';
+                    logger.warning(`Simulation failed — skipping bundle (attempt ${attempt + 1})`, { err: errStr, logs });
+                    throw new Error(`SimulationFailed: ${errStr}`);
+                }
             } else if (tx instanceof VersionedTransaction) {
                 tx.sign([payer]);
+                if (!tx.signatures[0]) {
+                    throw new Error('VersionedTransaction signing failed');
+                }
             }
+
+            const mainSignature = tx instanceof VersionedTransaction
+                ? bs58.encode(tx.signatures[0])
+                : bs58.encode(tx.signatures[0].signature!);
 
             const tipB58 = bs58.encode(tipTx.serialize());
             const mainB58 = bs58.encode(tx.serialize());
+            const body = JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'sendBundle',
+                params: [[mainB58, tipB58]],
+            });
 
-            // Round-robin through endpoints on retry to avoid 429s
-            const endpoint = JITO_ENDPOINTS[attempt % JITO_ENDPOINTS.length];
-
-            // Log the signature so it can be looked up on Solscan for debugging
-            const mainSignature = tx instanceof VersionedTransaction
-                ? bs58.encode(tx.signatures[0])
-                : bs58.encode((tx as Transaction).signatures[0].signature!);
-
-            logger.info(`Submitting bundle (attempt ${attempt + 1})`, {
+            // Fan-out to ALL endpoints simultaneously — first acceptance wins.
+            // Jito's 429 is global across endpoints (same rate bucket), so sequential
+            // round-robin just burns seconds. A parallel race means one healthy endpoint
+            // landing is enough, and we shed no time waiting for failed ones.
+            logger.info(`Submitting bundle to all endpoints (attempt ${attempt + 1})`, {
                 signature: mainSignature,
                 tip: cappedTip,
                 blockhash,
                 lastValidBlockHeight,
-                endpoint,
+                endpointCount: JITO_ENDPOINTS.length,
             });
 
-            const res = await fetch(`${endpoint}/api/v1/bundles`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "sendBundle",
-                    params: [[mainB58, tipB58]]
-
+            const { bundleId, endpoint } = await Promise.any(
+                JITO_ENDPOINTS.map(async (ep) => {
+                    const res = await fetch(`${ep}/api/v1/bundles`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body,
+                    });
+                    if (!res.ok) {
+                        throw new Error(`Jito HTTP ${res.status} from ${ep}: ${await res.text()}`);
+                    }
+                    const parsed = await res.json() as { result?: string; error?: { message: string } };
+                    if (parsed.error) throw new Error(`Jito RPC error from ${ep}: ${parsed.error.message}`);
+                    if (!parsed.result) throw new Error(`No result from ${ep}`);
+                    return { bundleId: parsed.result, endpoint: ep };
                 })
-            });
+            );
 
-            if (!res.ok) {
-                throw new Error(`Jito HTTP ${res.status}: ${await res.text()}`);
-            }
-
-            const parsedRes = await res.json() as { result?: string; error?: { message: string } };
-
-            if (parsedRes.error) {
-                throw new Error(`Jito RPC error: ${parsedRes.error.message}`);
-            }
-
-            if (!parsedRes.result) {
-                throw new Error('No result from Jito');
-            }
-
-            const bundleId = parsedRes.result;
-            logger.info(`Bundle accepted by Jito (attempt ${attempt + 1})`, { bundleId, tip: cappedTip });
-
+            logger.info(`Bundle accepted by Jito (attempt ${attempt + 1})`, { bundleId, tip: cappedTip, endpoint });
             return { bundleId, signature: mainSignature, lastValidBlockHeight };
 
         } catch (error: any) {
-            const errorMsg = error?.message || String(error);
+            // AggregateError = Promise.any() — ALL endpoints rejected
+            const errorMsg = error instanceof AggregateError
+                ? error.errors.map((e: any) => e?.message ?? String(e)).join(' | ')
+                : (error?.message || String(error));
+
             logger.warning(`Bundle submission failed (attempt ${attempt + 1})`, { error: errorMsg });
 
             if (attempt < maxAttempts - 1) {
                 currentTip = Math.min(JITO_TIP_MAX, currentTip * JITO_TIP_ESCALATE);
-                await new Promise(resolve => setTimeout(resolve, (JITO_RETRY_SLOTS || 2) * 400));
+                // SimulationFailed = on-chain error, no benefit from retrying immediately.
+                // Network rejection = short wait then retry with higher tip.
+                const isSimFail = errorMsg.includes('SimulationFailed');
+                const delay = isSimFail ? 0 : (JITO_RETRY_SLOTS || 2) * 400;
+                if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
     }
@@ -115,33 +176,34 @@ export async function sendBundle(
     throw new Error(`Failed to send bundle after ${maxAttempts} attempts`);
 }
 
-export async function pollSignatureConfirmation(
-    signature: string,
-    lastValidBlockHeight: number,
-    maxWaitMs = 30000
-): Promise<boolean> {
+
+export async function pollSignatureConfirmation(signature: string): Promise<boolean> {
     const start = Date.now();
-
-    while (Date.now() - start < maxWaitMs) {
-        // Check if blockhash has expired — no point waiting further
-        const currentHeight = await connection.getBlockHeight('confirmed');
-        if (currentHeight > lastValidBlockHeight) {
-            logger.warning('Blockhash expired before confirmation', { signature, currentHeight, lastValidBlockHeight });
-            return false;
-        }
-
-        const { value } = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
-        if (value) {
-            if (value.err) {
-                throw new Error(`Transaction confirmed but failed on-chain: ${JSON.stringify(value.err)}`);
+    while (Date.now() - start < 30000) {
+        try {
+            const { value } = await connection.getSignatureStatus(signature);
+            if (value) {
+                if (value.err) {
+                    // Tx landed on-chain but failed (slippage, bad account, etc.)
+                    logger.warning('Transaction landed but failed on-chain', {
+                        signature,
+                        err: JSON.stringify(value.err),
+                        confirmationStatus: value.confirmationStatus,
+                    });
+                    return false;
+                }
+                if (value.confirmationStatus === 'confirmed' || value.confirmationStatus === 'finalized') {
+                    return true;
+                }
             }
-            if (value.confirmationStatus === 'confirmed' || value.confirmationStatus === 'finalized') {
-                return true;
-            }
+        } catch (e) {
+            // If we hit a 429 here, wait longer
+            await new Promise(r => setTimeout(r, 2000));
         }
-
-        await new Promise(resolve => setTimeout(resolve, 500)); // poll every 500ms, was 1500ms
+        // 1000ms poll interval to save Helius credits
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
+    // Timeout — bundle was accepted by Jito but never landed in a block
+    logger.warning('Bundle confirmation timeout — tx not seen on-chain after 30s', { signature });
     return false;
 }

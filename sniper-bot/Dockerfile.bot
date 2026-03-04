@@ -1,0 +1,18 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies needed for compiling native add-ons if any
+RUN apk add --no-cache python3 make g++
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+COPY config.ts ./config.ts
+
+RUN npm run build
+
+# Bot uses no exposed network ports, runs purely headless
+CMD ["npm", "run", "start"]

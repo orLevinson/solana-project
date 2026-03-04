@@ -1,0 +1,7 @@
+# caddy proxy configuration
+# Replace "yourdomain.com" with your actual domain
+
+yourdomain.com {
+    # Proxy all traffic to the dashboard container
+    reverse_proxy dashboard:80
+}

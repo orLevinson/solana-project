@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache python3 make g++
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+COPY config.ts ./config.ts
+
+RUN npm run build
+
+# Expose API port
+EXPOSE 3000
+
+# Start compiled API entrypoint
+CMD ["node", "dist/api/index.js"]

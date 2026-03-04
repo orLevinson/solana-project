@@ -10,28 +10,21 @@ import { initializeGlobal } from './utils/globalState';
 import { executeBuy } from './trading/buyEngine';
 import { executeSell } from './trading/sellEngine';
 import { monitorLoop, getPositionCount } from './trading/positionManager';
-import { startApiServer } from './api/server';
 
 async function processNewToken(token: NewTokenEvent) {
     logger.info(`\n🚀 NEW TOKEN DETECTED: ${token.mint}`);
     logger.info(`   Dev: ${token.devWallet}`);
 
-    // Run filters in order of speed & cost (Fail fast)
-
-    // 1. Metadata (Free, fast API call, filters out 95% of tokens instantly)
-    if (!(await checkMetadata(token))) return;
-
-    // 2. Mint Authority (Fast, 1 lightweight RPC call)
-    if (!(await checkMintAuthority(token))) return;
-
-    // 3. Bundle Detect (Medium, ~6 RPC calls, checks first few blocks)
-    if (!(await checkBundleDetect(token))) return;
-
-    // 4. Rug History (Medium-Slow, RPC + API, caches help)
-    if (!(await checkRugHistory(token))) return;
-
-    // 5. Holder Concentration (Slowest, getProgramAccounts is heavy)
-    if (!(await checkHolderConcentration(token))) return;
+    // Run all 5 filters in parallel — bottleneck is now the slowest single filter
+    // (~500ms) rather than their sequential sum (~1,500ms). All filters must pass.
+    const [meta, mint, bundle, rug, holder] = await Promise.all([
+        checkMetadata(token),
+        checkMintAuthority(token),
+        checkBundleDetect(token),
+        checkRugHistory(token),
+        checkHolderConcentration(token),
+    ]);
+    if (!meta || !mint || !bundle || !rug || !holder) return;
 
     // --- ALL FILTERS PASSED ---
     logger.success(`\n💎 TOKEN PASSED ALL FILTERS! Ready to buy: ${token.mint}\n`);
@@ -43,12 +36,12 @@ async function processNewToken(token: NewTokenEvent) {
 // Start bot
 (async () => {
     await initializeGlobal();
-    startApiServer();
+    // API is now running in a separate standalone process (src/api/index.ts)
     logger.info(`Starting sniper bot... DRY_RUN=${DRY_RUN}`);
 
     // Start background monitor loop for open positions
     monitorLoop(
-        async (pos, sellPct) => { await executeSell(pos, sellPct, 'TP'); },
+        async (pos, sellPct, onConfirmed) => { await executeSell(pos, sellPct, 'TP', onConfirmed); },
         async (pos) => { await executeSell(pos, 1.0, 'SL'); },
         async (pos) => { await executeSell(pos, 1.0, 'TIME_STOP'); }
     ).catch((err: any) => {

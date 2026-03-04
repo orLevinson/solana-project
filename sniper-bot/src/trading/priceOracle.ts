@@ -1,6 +1,6 @@
 import { connection } from "../utils/rpc";
 import { logger } from "../logger/logger";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { PRICE_API_FAIL_LIMIT, PUMP_FUN_PROGRAM_ID, PUMP_FUN_REST_API, PRICE_API_RETRY_COOLDOWN } from "../../config";
 
 let restFailCount = 0;
@@ -15,7 +15,9 @@ async function getPriceRest(mint: string): Promise<number> {
     const res = await fetch(`${PUMP_FUN_REST_API}/${mint}`);
     if (!res.ok) throw new Error(`Failed to fetch mint data for ${mint} ( ${res.status} )`);
     const data = await res.json() as mintData;
-    return data.virtual_sol_reserves / data.virtual_token_reserves;
+    // virtual_sol_reserves is in lamports, virtual_token_reserves is in token base units.
+    // Divide by LAMPORTS_PER_SOL to produce SOL/token — same unit as entryPrice.
+    return (data.virtual_sol_reserves / data.virtual_token_reserves) / LAMPORTS_PER_SOL;
 }
 
 async function fetchPriceOnChain(mint: string): Promise<number> {
@@ -27,7 +29,12 @@ async function fetchPriceOnChain(mint: string): Promise<number> {
     if (!info) throw new Error(`Failed to fetch bonding curve for ${mint}`);
     const virtualTokenReserves = info.data.readBigUInt64LE(8);
     const virtualSolReserves = info.data.readBigUInt64LE(16);
-    const price = Number((virtualSolReserves * 1000000n) / virtualTokenReserves) / 1e9;
+    // Both reserves are stored as u64 integers:
+    //   virtualSolReserves   → lamports
+    //   virtualTokenReserves → token base units
+    // Scale up before integer division to preserve precision, then convert
+    // lamports → SOL to match the SOL/token units used by entryPrice.
+    const price = Number((virtualSolReserves * 1_000_000_000n) / virtualTokenReserves) / 1e18;
     return price;
 }
 

@@ -1,5 +1,5 @@
 import { PublicKey, LAMPORTS_PER_SOL, Transaction, ComputeBudgetProgram } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";
 import { PUMP_SDK, bondingCurvePda, getBuyTokenAmountFromSolAmount } from "@pump-fun/pump-sdk";
 import { connection } from '../utils/rpc';
@@ -39,7 +39,7 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
             spent: totalSolCost.toFixed(4),
             tokensReceived: dryTokenAmount,
         });
-        addPosition(token, totalSolCost, dryTokenAmount);
+        addPosition(token, totalSolCost, dryTokenAmount, 'mock_signature_dry_run');
         return true;
     }
 
@@ -61,18 +61,41 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
 
         const mintPublicKey = new PublicKey(token.mint);
         const bondingCurvePDA = bondingCurvePda(token.mint);
-        const userAta = getAssociatedTokenAddressSync(mintPublicKey, wallet.publicKey, true, TOKEN_PROGRAM_ID);
         const global = getGlobal();
 
-        const [bondingCurveInfo, userAtaInfo] = await Promise.all([
+        // Detect token program — pump.fun migrated to Token-2022 for new mints.
+        // We need mintInfo to know the token program before we can derive the ATA,
+        // so fetch mint + bonding curve first, then derive ATA and fetch it in a
+        // second parallel batch (two round-trips instead of three).
+        const [mintInfo, bondingCurveInfo] = await Promise.all([
+            connection.getAccountInfo(mintPublicKey),
             connection.getAccountInfo(bondingCurvePDA),
-            connection.getAccountInfo(userAta),
         ]);
 
         if (!bondingCurveInfo) {
             logger.warning('Buy skipped: missing bonding curve account', { mint: token.mint });
             return false;
         }
+
+        if (!mintInfo) {
+            logger.warning('Buy skipped: mint account not found', { mint: token.mint });
+            return false;
+        }
+
+        // Determine the correct token program from the mint account owner
+        const tokenProgramId = mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)
+            ? TOKEN_2022_PROGRAM_ID
+            : TOKEN_PROGRAM_ID;
+
+        logger.info('Detected token program', {
+            mint: token.mint,
+            tokenProgram: tokenProgramId.toBase58(),
+            isToken2022: mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID),
+        });
+
+        // ATA address is now known — fetch it in parallel with nothing else wasted
+        const userAta = getAssociatedTokenAddressSync(mintPublicKey, wallet.publicKey, true, tokenProgramId);
+        const userAtaInfo = await connection.getAccountInfo(userAta);
 
         const bondingCurve = PUMP_SDK.decodeBondingCurve(bondingCurveInfo);
 
@@ -96,7 +119,7 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
             associatedUserAccountInfo: userAtaInfo,
             mint: mintPublicKey,
             user: wallet.publicKey,
-            tokenProgram: TOKEN_PROGRAM_ID,
+            tokenProgram: tokenProgramId,
             amount: minTokenAmount,
             solAmount: solLamports,
             slippage: SLIPPAGE,
@@ -107,17 +130,16 @@ export async function executeBuy(token: NewTokenEvent, positionCount: number): P
             .add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE }))
             .add(...instructions);
 
-        const { bundleId, signature, lastValidBlockHeight } = await sendBundle(tx, wallet.keypair, JITO_TIP);
-        logger.success('Buy bundle accepted by Jito. Optimistically opening position.', { mint: token.mint, bundleId, signature });
 
-        // Optimistically register position so price monitoring starts immediately
-        addPosition(token, BUY_SIZE, tokenAmount.toNumber());
+        const { bundleId, signature, lastValidBlockHeight } = await sendBundle(tx, wallet.keypair);
 
         // Poll for confirmation async — don't block the main thread
         import("../utils/jito").then(async ({ pollSignatureConfirmation }) => {
             try {
-                const confirmed = await pollSignatureConfirmation(signature, lastValidBlockHeight);
+                const confirmed = await pollSignatureConfirmation(signature);
                 if (confirmed) {
+                    logger.success('Buy bundle accepted by Jito. Optimistically opening position.', { mint: token.mint, bundleId, signature });
+                    addPosition(token, BUY_SIZE, tokenAmount.toNumber(), signature);
                     logger.success(`On-chain buy confirmed!`, { mint: token.mint, signature });
                 } else {
                     logger.warning(`Buy bundle dropped by network. Rolling back position.`, { mint: token.mint, signature });
