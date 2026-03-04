@@ -79,7 +79,10 @@ export const JITO_ENDPOINTS = [
     'https://amsterdam.mainnet.block-engine.jito.wtf', // Amsterdam
     'https://tokyo.mainnet.block-engine.jito.wtf',     // Tokyo
 ];
-export const JITO_BLOCK_ENGINE_URL = JITO_ENDPOINTS[1];
+
+// Allow override from .env, otherwise default to Frankfurt
+const envJitoUrl = process.env.JITO_BLOCK_ENGINE_URL?.trim().replace(/^["'](.+)["']$/, '$1');
+export const JITO_BLOCK_ENGINE_URL = envJitoUrl || JITO_ENDPOINTS[1];
 export const COMPUTE_UNIT_LIMIT = 200_000;  // max compute units per tx (needs headroom for ATA creation)
 export const COMPUTE_UNIT_PRICE = 10_000;   // microlamports per CU — priority fees are irrelevant inside Jito bundles; Jito validators are paid via tip, not priority fee
 
